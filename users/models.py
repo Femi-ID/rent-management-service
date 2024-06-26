@@ -2,9 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User, AbstractUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
-from enums import UserType
+from .enums import UserType
 import uuid
-# Create your models here.
 
 
 class CustomUserManager(BaseUserManager):
@@ -50,8 +49,8 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser, PermissionsMixin):
-
     # std_user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
+    uuid = models.UUIDField(default=uuid.uuid4, help_text="Secondary user id field.")
     username = models.CharField(max_length=250, null=False, unique=True)
     email = models.EmailField(max_length=250, null=False, unique=True)
     phone_number = models.CharField(max_length=14, null=False)
@@ -63,7 +62,7 @@ class User(AbstractUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'user_type', 'phone_number', 'date_of_birth']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'user_type', 'phone_number', 'date_of_birth']
 
     class Meta:
         ordering = ['-date_created']

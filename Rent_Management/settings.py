@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'users',
 
     # added dependencies
+    'rest_framework',
     'djoser',
     'corsheaders',
 ]
@@ -49,6 +52,9 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    # corsheaders middleware
+    "corsheaders.middleware.CorsMiddleware",
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -132,3 +138,59 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CORS_ALLOW_ALL_ORIGINS = True  # CHANGE THIS DURING PRODUCTION
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated'
+    ),
+}
+
+# simple jwt configuration for  authorization header
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('JWT', 'Bearer'),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=2)
+}
+
+DJOSER = {
+    # sign up user
+    'SEND_ACTIVATION_EMAIL': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'USER_CREATE_PASSWORD_RETYPE': True, # pass re-password to /users endpoint.
+    'ACTIVATION_URL': '/auth/activate/?uid={uid}&token={token}', # url sent to the email to activate new user
+
+    # reset user password
+    'PASSWORD_RESET_CONFIRM_URL': 'password-reset/{uid}/{token}', # wil be appended to DOMAIN and sent to user email
+    # 'SET_PASSWORD_RETYPE': True, # pass re_new_password to /users/set_password/ (when user creates new password)
+    'PASSWORD_RESET_CONFIRM_RETYPE': True, # pass re_new_password to /users/reset_password_confirm/
+
+    'SERIALIZERS': {
+        # create  new user
+        'user_create': 'users.serializers.UserCreateSerializer',
+
+        # serializer view for general users and specific users
+        'user': 'users.serializers.UserSerializer', # /users endpoint
+        'current_user': 'users.serializers.UserSerializer', # /users/me endpoint
+    },
+
+}
+
+SITE_NAME = 'RENT PADDI'
+DOMAIN = 'localhost:8000' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
+
+# Email config
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
