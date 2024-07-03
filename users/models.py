@@ -85,9 +85,16 @@ class HouseDetails(models.Model):
     # house_image = models.ImageField()
     rent = models.IntegerField()
     availability = models.BooleanField(default=True)
+    # units = models.IntegerChoices()
 
     def __str__(self):
         return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license} >> available: {self.availability}'
+
+
+# class LeaseAgreement(models.Model):
+#     house = models.ForeignKey(User, related_name='lease_agreement', on_delete=models.DO_NOTHING, limit_choices_to={'user_type': 'LANDLORD'})
+#     document = models.FileField()
+
 
 # User.add_to_class
 
