@@ -24,15 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = 'ERGBFSJbjsnkfjksnijndf'
+SECRET_KEY = os.environ.get('SECRET_KEY')
+# SECRET_KEY = 'ERGBFSJbjsnkfjksnijndf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.environ.get('DEBUG')
-DEBUG = True
+DEBUG = os.environ.get('DEBUG')
+# DEBUG = True
 
-# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
+# ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -210,21 +210,21 @@ SITE_NAME = 'RENT PADI'
 DOMAIN = 'localhost:8000' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
 
 # Email config
-# EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
-# EMAIL_HOST = os.environ.get('EMAIL_HOST')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-# EMAIL_PORT = os.environ.get('EMAIL_PORT')
-# EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-# DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_PORT = config('EMAIL_PORT')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS')
-DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+# EMAIL_BACKEND = config('EMAIL_BACKEND')
+# EMAIL_HOST = config('EMAIL_HOST')
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+# EMAIL_PORT = config('EMAIL_PORT')
+# EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+# DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
