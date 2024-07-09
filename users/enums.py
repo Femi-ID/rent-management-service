@@ -1,13 +1,10 @@
-from django.db import models
+from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 
-class UserType(models.TextChoices):
-        LANDLORD = "Landlord", _("Landlord")
-        TENANT = "Tenant", _("Tenant")
+class UserType(TextChoices):
+        LANDLORD = "Landlord"
+        TENANT = "Tenant"
 
 
 # class HouseAvailability(models.TextChoices):
         
-
-
-

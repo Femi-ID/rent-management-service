@@ -50,13 +50,13 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser, PermissionsMixin):
     # std_user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
-    uuid = models.UUIDField(default=uuid.uuid4, help_text="Secondary user id field.")
+    id = models.UUIDField(default=uuid.uuid4,  primary_key=True, editable=False, unique=True)
     username = models.CharField(max_length=250, null=False, unique=True)
     email = models.EmailField(max_length=250, null=False, unique=True)
     phone_number = models.CharField(max_length=14, null=False)
     date_of_birth = models.DateField()
-    user_type = models.CharField(max_length=8, choices=UserType, default=UserType.TENANT)
-    date_created = models.DateTimeField(auto_now_add=True)
+    user_type = models.CharField(max_length=8, choices=UserType.choices, default=UserType.TENANT)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     # create UserManager object to use this custom model.
     objects = CustomUserManager()
@@ -65,7 +65,7 @@ class User(AbstractUser, PermissionsMixin):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'user_type', 'phone_number', 'date_of_birth']
 
     class Meta:
-        ordering = ['-date_created']
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Username: {self.username} >> UserType: {self.user_type} >> email: {self.email}"
@@ -74,21 +74,6 @@ class User(AbstractUser, PermissionsMixin):
         # if self.user_type == 'TENANT':
         #     job_description = models.TextField(blank=True, null=True)
 
-
-class HouseDetails(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, help_text="To reference the house object when called.")
-    owner_id = models.ForeignKey(User, related_name='house_details', on_delete=models.CASCADE, limit_choices_to={'user_type': 'LANDLORD'})
-    address = models.CharField(max_length=255, null=False)
-    city = models.CharField(max_length=50)
-    state = models.CharField(max_length=50)
-    reg_license = models.CharField(max_length=100)
-    # house_image = models.ImageField()
-    rent = models.IntegerField()
-    availability = models.BooleanField(default=True)
-    # units = models.IntegerChoices()
-
-    def __str__(self):
-        return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license} >> available: {self.availability}'
 
 
 # class LeaseAgreement(models.Model):

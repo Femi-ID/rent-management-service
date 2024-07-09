@@ -48,8 +48,10 @@ INSTALLED_APPS = [
     # applications
     'users',
     # paystack implementation
-    'accounts' 
-    'payments' 
+    'accounts', 
+    'payments',
+    'wallets',
+    'core', 
 
     # added dependencies
     'rest_framework',
