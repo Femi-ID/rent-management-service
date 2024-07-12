@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
-# SECRET_KEY = 'ERGBFSJbjsnkfjksnijndf'
+# SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG')
@@ -107,7 +107,7 @@ DATABASES = {
     }
 }
 database_url = os.environ.get('DATABASE_URL')
-DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:TGHpoBA2MnR3@ep-fragrant-boat-a2kom080.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
+DATABASES['default'] = dj_database_url.parse('postgresql://rentdb_owner:JTG6o8VCbXxH@ep-falling-river-a2gz5hjy.eu-central-1.aws.neon.tech/rentdb?sslmode=require')
 
 # DATABASES = {
 #   'default': {
@@ -190,7 +190,7 @@ DJOSER = {
     'SEND_CONFIRMATION_EMAIL': True,
     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
     'USER_CREATE_PASSWORD_RETYPE': True, # pass re-password to /users endpoint.
-    'ACTIVATION_URL': '/auth/activate/?uid={uid}&token={token}', # url sent to the email to activate new user
+    'ACTIVATION_URL': 'auth/activate/?uid={uid}&token={token}', # url sent to the email to activate new user
 
     # reset user password
     'PASSWORD_RESET_CONFIRM_URL': 'password-reset/{uid}/{token}', # wil be appended to DOMAIN and sent to user email
@@ -226,6 +226,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 # EMAIL_PORT = config('EMAIL_PORT')
 # EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+# EMAIL_USE_SSL = config('EMAIL_USE_SSL')
 # DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')

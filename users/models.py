@@ -51,12 +51,17 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser, PermissionsMixin):
     # std_user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
     id = models.UUIDField(default=uuid.uuid4,  primary_key=True, editable=False, unique=True)
+    # uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     username = models.CharField(max_length=250, null=False, unique=True)
     email = models.EmailField(max_length=250, null=False, unique=True)
     phone_number = models.CharField(max_length=14, null=False)
     date_of_birth = models.DateField()
+    job_title = models.CharField(max_length=100, blank=False, null=True)
+    company_name = models.CharField(max_length=200, blank=False, null=True)
+    company_website = models.CharField(max_length=200, blank=True)
     user_type = models.CharField(max_length=8, choices=UserType.choices, default=UserType.TENANT)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # create UserManager object to use this custom model.
     objects = CustomUserManager()
@@ -70,20 +75,9 @@ class User(AbstractUser, PermissionsMixin):
     def __str__(self):
         return f"Username: {self.username} >> UserType: {self.user_type} >> email: {self.email}"
 
-    # def addTenantInfo(self):
-        # if self.user_type == 'TENANT':
-        #     job_description = models.TextField(blank=True, null=True)
-
-
-
 # class LeaseAgreement(models.Model):
 #     house = models.ForeignKey(User, related_name='lease_agreement', on_delete=models.DO_NOTHING, limit_choices_to={'user_type': 'LANDLORD'})
 #     document = models.FileField()
 
 
 # User.add_to_class
-
-
-
-
-
