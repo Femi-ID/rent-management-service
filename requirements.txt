@@ -23,6 +23,7 @@ psycopg2-binary
 pycparser
 PyJWT
 python-decouple
+python-dotenv
 python3-openid
 requests
 requests-oauthlib
