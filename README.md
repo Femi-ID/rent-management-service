@@ -78,6 +78,7 @@ The API should now be running locally at [http://localhost:8000/](http://localho
 >> The endpoint here implements swagger's feature to test each endpoint in the application with proper documentation. It is useful as its tests each request method with their required parameters. You prefix `/swagger` after the localhost url.
 
 
+
 ## Getting Started
 
 To get started with the project, refer to the [Installation Instructions](#installation-instructions) and [Usage Instructions](#usage-instructions) sections. Familiarize yourself with the API endpoints by exploring the [API Documentation](#api-documentation) provided.
