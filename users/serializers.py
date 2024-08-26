@@ -9,7 +9,7 @@ custom_user = get_user_model()
 class UserSerializer(BaseUserSerializer):
     class Meta(BaseUserSerializer.Meta):
         fields = [
-            'id', 'is_active', 'uuid',
+            'id', 'is_active', 
             'first_name', 'last_name', 'username', 
             'email', 'phone_number', 'user_type'
         ]

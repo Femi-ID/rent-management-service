@@ -15,6 +15,8 @@ from datetime import timedelta
 import dj_database_url
 from decouple import config
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,15 +26,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-# SECRET_KEY = config("SECRET_KEY")
+# SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
-# DEBUG = True
+# DEBUG = os.environ.get('DEBUG')
+DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
-# ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -107,7 +109,7 @@ DATABASES = {
     }
 }
 database_url = os.environ.get('DATABASE_URL')
-DATABASES['default'] = dj_database_url.parse('postgresql://rentdb_owner:JTG6o8VCbXxH@ep-falling-river-a2gz5hjy.eu-central-1.aws.neon.tech/rentdb?sslmode=require')
+DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:seyAmqkU4iB3@ep-curly-hall-a2jgryqx.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
 # DATABASES = {
 #   'default': {
@@ -174,7 +176,7 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated'
+        'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
@@ -212,25 +214,25 @@ SITE_NAME = 'RENT PADI'
 DOMAIN = 'localhost:8000' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
 
 # Email config
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
-EMAIL_HOST = os.environ.get('EMAIL_HOST')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_PORT = os.environ.get('EMAIL_PORT')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
+# EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+# EMAIL_HOST = os.environ.get('EMAIL_HOST')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+# EMAIL_PORT = os.environ.get('EMAIL_PORT')
+# EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+# DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
-# EMAIL_BACKEND = config('EMAIL_BACKEND')
-# EMAIL_HOST = config('EMAIL_HOST')
-# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-# EMAIL_PORT = config('EMAIL_PORT')
-# EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS')
 # EMAIL_USE_SSL = config('EMAIL_USE_SSL')
-# DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
-PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
-PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
+# PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
+# PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
-# PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
-# PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
