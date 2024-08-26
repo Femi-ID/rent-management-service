@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from core.models import HouseUnit
 import json
 from django.shortcuts import get_object_or_404
-from pypaystack import Plan
+# from pypaystack import Plan
 
 # TODO: CREATE AND SAVE PAYMENT INSTANCE FROM THE MODEL
 # return JsonResponse(user_list, safe=False)
