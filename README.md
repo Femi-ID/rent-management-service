@@ -70,7 +70,7 @@ The API should now be running locally at [http://localhost:8000/](http://localho
 
 > ### Payment Feature:
 >
->> The endpoint here contains the logic and handles everything regarding the payment and transaction done on the app. We implemented paystack's API for this feature. The user-type (landlord) is expected to create a new plan for the tenant to subscribe to (example: weekly, monthly bi-annual, annual) depending on what they opt for. More details here > [chat_app](https://github.com/prosper-20/tutcov-backend/tree/corrections/chat)
+>> The endpoint here contains the logic and handles everything regarding the payment and transaction done on the app. We implemented paystack's API for this feature. The user-type (landlord) is expected to create a new plan for the tenant to subscribe to (example: weekly, monthly bi-annual, annual) depending on what they opt for. More details here > [payments](https://github.com/Femi-ID/rent-management-service/tree/dev/payments)
 
 
 > ### Swagger Doc Feature:
