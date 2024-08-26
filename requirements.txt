@@ -7,11 +7,14 @@ defusedxml
 dj-database-url
 Django
 django-cors-headers
+django-rest-swagger
 django-taggit
 django-templated-mail
 djangorestframework
 djangorestframework-simplejwt
 djoser
+drf-yasg
+gunicorn
 idna
 oauthlib
 pillow
