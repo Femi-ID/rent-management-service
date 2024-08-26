@@ -93,7 +93,7 @@ We welcome contributions from the community. Please follow our [Contribution Gui
 
 #### Contribution Guidelines
 1. Clone the repo git clone https://github.com/Femi-ID/rent-management-service.git
-2. Open your terminal & set the origin branch: `git remote add femii https://github.com/prosper-20/tutcov-backend.git`
+2. Open your terminal & set the origin branch: `git remote add femii https://github.com/Femi-ID/rent-management-service.git`
 3. Pull origin `git pull dev`
 4. Create a new branch for the task you were assigned to, e.g TicketNumber/(Feat/Bug/Fix/Chore)/Ticket-title : `git checkout -b ZA-001/Feat/Receipts`
 5. After making changes, do `git add .` 
