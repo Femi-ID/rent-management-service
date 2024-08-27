@@ -20,8 +20,7 @@ class CustomUserManager(BaseUserManager):
             # first_name=first_name,
             # last_name=last_name,
             user_type=user_type,
-            **extra_fields
-        )
+            **extra_fields)
 
         user.set_password(password)
         user.save()
@@ -55,7 +54,7 @@ class User(AbstractUser, PermissionsMixin):
     # uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     username = models.CharField(max_length=250, null=True, unique=True)
     middle_name = models.CharField(max_length=150, blank=True, null=True) 
-    email = models.EmailField(max_length=250, null=False, unique=True)
+    email = models.EmailField(max_length=250, unique=True)
     phone_number = models.CharField(max_length=14, null=True)
     date_of_birth = models.DateField()
     job_title = models.CharField(max_length=100, blank=False, null=True,
@@ -72,7 +71,7 @@ class User(AbstractUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['email' 'user_type', 'date_of_birth']
+    REQUIRED_FIELDS = ['user_type', 'date_of_birth']
 
     class Meta:
         ordering = ['-created_at']

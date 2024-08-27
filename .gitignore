@@ -5,3 +5,4 @@ db.sqlite3
 __pycache__
 .venv
 backup.json
+/__pycache__/**
