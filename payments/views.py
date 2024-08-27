@@ -24,10 +24,13 @@ def get_house_unit(house_unit_id):
     return house_unit
 
 class AcceptPayment(APIView):
-    def get(self, request, house_unit_id):
+    """The first stage of Paystack transaction. This endpoint accepts the email and amount of the user initializing the transaction."""
+    # The landlord is only allowed to send the email of the tenant while the amount is gotten from the rent_price of the """
+    def post(self, request, house_unit_id):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
+            email = request.POST['email']
 
             initialize_payment = paystack.initialize_payment(email=user.email, amount=house_unit.rent_price)
             if initialize_payment:
@@ -86,6 +89,7 @@ class VerifyPayment(APIView):
                 
             
 class CreatePlan(APIView):
+    """The landlord usertype should only be allowed to create a plan."""
     def post(self, request):
         # TODO: Calculate the amount equivalent for the interval selected usings signals
         # TODO: low-priority feature; add the user_type to the jwt payload
@@ -158,6 +162,7 @@ def get_plan(plan_id):
 
 
 class CreateSubscription(APIView):
+    """"Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
     def post(self, request, plan_id):
         if request.user.is_authenticated:   
             customer = request.user.email
