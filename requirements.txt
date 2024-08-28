@@ -34,3 +34,6 @@ typing_extensions
 tzdata
 urllib3
 whitenoise
+
+
+celery[redis]  #this is an distributed task queue/job system to handle asynchronous tasks such as email sending. It is used in the notification application.

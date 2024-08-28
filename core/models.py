@@ -21,6 +21,7 @@ class House(models.Model):
 
 
 class HouseUnit(models.Model):
+    id = models.UUIDField(default=uuid.uuid4,  primary_key=True, editable=False, unique=True)
     # id = models.BigAutoField(primary_key=True)
     # unit_image = models.ImageField(upload_to='files/unit_images/', null=True, blank=True)
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name="units", null=True, blank=True)
@@ -35,6 +36,7 @@ class HouseUnit(models.Model):
 
 
 class LeaseAgreement(models.Model):
+    id = models.UUIDField(default=uuid.uuid4,  primary_key=True, editable=False, unique=True)
     house_unit  = models.ForeignKey(HouseUnit, on_delete=models.CASCADE, related_name="lease_agreements")
     document = models.FileField(upload_to="files/lease_agreements/")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)

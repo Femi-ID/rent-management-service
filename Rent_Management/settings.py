@@ -11,10 +11,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from datetime import timedelta
+from datetime import datetime, timedelta
 import dj_database_url
 from decouple import config
 import os
+from celery.schedules import crontab
+
 # from dotenv import load_dotenv
 # load_dotenv()
 
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'payments',
     'wallets',
     'core', 
+    'notifications',
 
     # added dependencies
     'rest_framework',
@@ -242,3 +245,22 @@ DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
+
+
+# Celery configuration
+# use a managed redis service when deploying to production
+# make sure to install redis locally for development
+
+# CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
+CELERY_BROKER_URL = config('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'check-rent-due-dates-daily': {
+        'task': 'notification.tasks.check_rent_due_dates',
+        'schedule': crontab(minute='*'),  # Runs daily at midnight
+    },
+}
+
