@@ -115,7 +115,7 @@ DATABASES = {
 }
 # database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
-# DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:seyAmqkU4iB3@ep-curly-hall-a2jgryqx.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
+# DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
 # THE DATABASE YOU ARE TO WORK WITH WHEN TESTING:
 DATABASES = {
