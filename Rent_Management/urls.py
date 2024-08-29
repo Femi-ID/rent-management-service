@@ -42,6 +42,7 @@ urlpatterns = [
     path('auth/', include('djoser.urls.jwt')),
     path('accounts/', include('accounts.urls')),
     path('payments/', include('payments.urls')),
+    path('tickets/', include('tickets.urls')),
     path('house/', include('core.urls')),
 
     # swagger route for documentation

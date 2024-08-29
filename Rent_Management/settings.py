@@ -55,8 +55,9 @@ INSTALLED_APPS = [
     'accounts', 
     'payments',
     'wallets',
-    'core', 
     'notifications',
+    'core',
+    'tickets', 
 
     # added dependencies
     'rest_framework',
