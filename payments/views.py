@@ -1,57 +1,63 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView
-from .models import Payment, PaymentPlan
+from .models import Payment, PaymentPlan, Subscription
 from users.models import User
 from rest_framework.response import Response
 from rest_framework import status
-import requests
+import requests, json
 from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
-import json
-from django.shortcuts import get_object_or_404
-# from pypaystack import Plan
+from .serializers import PaymentSerializer
 
-# TODO: CREATE AND SAVE PAYMENT INSTANCE FROM THE MODEL
-# return JsonResponse(user_list, safe=False)
-# TODO: retrieve the generated reference pay['data']['reference']
-# TODO: I'm currently unable to create a payment obj with the initialize response
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
     return house_unit
 
 class AcceptPayment(APIView):
-    """The first stage of Paystack transaction. This endpoint accepts the email and amount of the user initializing the transaction."""
-    # The landlord is only allowed to send the email of the tenant while the amount is gotten from the rent_price of the """
+    """The first stage of Paystack transaction. This endpoint accepts the email and amount of the user initializing the transaction.
+    **The landlord is only allowed to send the email of the tenant while the amount is gotten from the rent_price of the house unit.**"""
     def post(self, request, house_unit_id):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
-            email = request.POST['email']
-
-            initialize_payment = paystack.initialize_payment(email=user.email, amount=house_unit.rent_price)
+            email = request.POST.get('email') # tenant's email here for onboarding
+            amount = int(house_unit.rent_price*100)
+            if not email:
+                return Response({"error": "Email must be passed as a request body."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            initialize_payment = paystack.initialize_payment(email=email, amount=amount)
             if initialize_payment:
-                # initial_payment_json = initial_payment.json()
-                reference=json.dumps(initialize_payment["data"])
                 print('initialize payment', initialize_payment)
-                print('reference::: ', reference)
-                payment_obj = Payment.objects.create(user=user, amount=house_unit.rent_price, 
-                                                    reference=initialize_payment['data']['data']['reference'],
-                                                    house_unit=house_unit)
-                return Response({'initialize_payment': initialize_payment, 
-                                'payment_obj': payment_obj, 
-                                'message' : 'Payment initialized.'})
+                reference = initialize_payment['data']['data']['reference']
+                authorization_url = initialize_payment['data']['data']['authorization_url']
+                payment_obj = Payment.objects.create(user=user, 
+                                                     amount=amount, 
+                                                     email=email, 
+                                                     house_unit=house_unit,
+                                                     reference=reference,
+                                                     authorization_url=authorization_url)
+                print('payment obj', payment_obj)
+                payment_serializer = PaymentSerializer(payment_obj)
+                return Response({'initialize_payment': initialize_payment,
+                                 'payment_obj': payment_serializer.data, 
+                                 'message' : 'Payment initialized.'})
             return Response({'initialize_payment': initialize_payment,
-                                'message' : 'Payment could not be initialized.'})
+                             'message' : 'Sorry payment could not be initialized.'})
     
 
 class VerifyPayment(APIView):
     def get(self, request, house_unit_id):
+        """pass reference as a query parameter in the url i.e: 'example.com/?reference=12gwe4323t3y4'"""
         if request.user.is_authenticated:
+            # pass reference as a query parameter in the url
             ref = request.GET.get('reference')
+            if not ref:
+                return Response({"error": "Reference must be passed as a query parameter in the url."},
+                                status=status.HTTP_400_BAD_REQUEST)
             verify_transaction = paystack.verify_payment(ref=ref)
             transaction_status = verify_transaction['response_data']['data']['status']
             print(ref)
@@ -62,21 +68,46 @@ class VerifyPayment(APIView):
 
             if house_unit:
                 try:
-                    if verify_transaction['response_data']['data']['amount'] == house_unit.rent_price:
-                        if transaction_status == 'success':
-                            payment.transaction_id = verify_transaction['response_data']['data']['id']
-                            payment.save()
-                            return Response({"message": "Payment confirmed. Thank you.",
-                                             'verify_transaction':verify_transaction},
-                                             status=status.HTTP_200_OK)
-                        elif transaction_status == 'failed':
-                            return Response({"message": "Payment failed. Please try again.",
-                                             'verify_transaction':verify_transaction},
-                                            status=status.HTTP_400_BAD_REQUEST)
-                        elif transaction_status == 'reversed':
-                            return Response({"message": "Payment was reversed.",
-                                             'verify_transaction':verify_transaction},
-                                            status=status.HTTP_400_BAD_REQUEST)
+                    if verify_transaction['response_data']['data']['amount'] == house_unit.rent_price*100:
+                        
+                        def t_status(transaction_status):
+                            match transaction_status:
+                                case 'success':
+                                    payment.transaction_id = verify_transaction['response_data']['data']['id']
+                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code']
+                                    payment.authorization_code = verify_transaction['response_data']['data']['authorization']['authorization_code'], None
+                                    payment.is_verified = True
+                                    payment.save()
+                                    return Response({"message": "Payment confirmed. Thank you.",
+                                                     'verify_transaction':verify_transaction},
+                                                     status=status.HTTP_200_OK)
+                                case 'failed':
+                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                    payment.save()
+                                    return Response({"message": "Payment failed. Please try again.",
+                                                     'verify_transaction':verify_transaction},
+                                                     status=status.HTTP_400_BAD_REQUEST)
+                                case 'abandoned':
+                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                    payment.save()
+                                    return Response({"message": "Payment abandoned. Transaction not completed.",
+                                                     'verify_transaction':verify_transaction},
+                                                     status=status.HTTP_100_CONTINUE)
+                                case 'reversed':
+                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                    payment.save()
+                                    return Response({"message": "Payment was reversed.",
+                                                     'verify_transaction':verify_transaction},
+                                                     status=status.HTTP_100_CONTINUE)
+                                case _:
+                                    return Response({"message": "Unable to verify payment.",
+                                                     'verify_transaction':verify_transaction},
+                                                     status=status.HTTP_400_BAD_REQUEST)
+                        t_status = t_status(transaction_status)
+                        return t_status
                     else:
                         # this else condition will never be triggered because the transaction price is already set to the rent price 
                         return Response({'message': "The amount for the transaction is not equal to the rent price."},
@@ -84,7 +115,7 @@ class VerifyPayment(APIView):
                 except Exception as e:
                     return Response({
                         "success": False,
-                        "message": f'Internal server error, payment was not processed: {e}'
+                        "message": f'Your payment was not processed: {e}'
                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
             
@@ -95,12 +126,14 @@ class CreatePlan(APIView):
         # TODO: low-priority feature; add the user_type to the jwt payload
         if request.user.is_authenticated and request.user.user_type == 'Landlord':
             user = request.user
-            print('user >>>>', user)
-            name = request.POST['name']
-            interval = request.POST['interval']
-            amount = request.POST['amount'] 
+            name = request.POST.get('name')
+            interval = request.POST.get('interval')
+            amount = request.POST.get('amount')
+            amount_int = int(amount) * 100
+            print('amount >>', type(amount))
+            amount_str = str(amount_int)
             description = request.POST.get('description', None)
-            invoice_limit = request.POST.get('invoice_limit', None)
+            invoice_limit = request.POST.get('invoice_limit', None) # no of times to charge the customer
 
             if not name or not interval:
                 return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
@@ -110,30 +143,30 @@ class CreatePlan(APIView):
                     match interval:
                         case 'weekly':
                             return Response({"message": "WEEKLY plan created successfully. Thank you.",
-                                                'create_plan':create_plan},
-                                                status=status.HTTP_201_CREATED)
+                                             'create_plan':create_plan},
+                                             status=create_plan['status'])
                         case 'monthly':
                             return Response({"message": "MONTHLY plan created successfully. Thank you.",
-                                                'create_plan':create_plan},
-                                                status=status.HTTP_201_CREATED)
+                                             'create_plan':create_plan},
+                                             status=create_plan['status'])
                         case 'quarterly':
                             return Response({"message": "QUARTERLY plan created successfully. Thank you.",
-                                                'create_plan':create_plan},
-                                                status=status.HTTP_201_CREATED)
+                                             'create_plan':create_plan},
+                                             status=create_plan['status'])
                         case 'biannually':
                             return Response({"message": "BIANNUALLY plan created successfully. Thank you.",
-                                                'create_plan':create_plan},
-                                                status=status.HTTP_201_CREATED)
+                                             'create_plan':create_plan},
+                                             status=create_plan['status'])
                         case 'annually':
                             return Response({"message": "ANNUALLY plan created successfully. Thank you.",
-                                                'create_plan':create_plan},
-                                                status=status.HTTP_201_CREATED)
+                                             'create_plan':create_plan},
+                                             status=status.HTTP_201_CREATED)
                         case _:
                             return Response({"message": "Invalid plan. Please try again.",
-                                                'create__plan':create_plan},
-                                            status=status.HTTP_400_BAD_REQUEST)
+                                             'create__plan':create_plan},
+                                             status=create_plan['status'])
             try:
-                create_plan = paystack.create_plan(name=name, interval=interval, amount=amount)
+                create_plan = paystack.create_plan(name=name, interval=interval, amount=amount_str)
                 print('create_plan >>>', create_plan)
                 if create_plan['response_data']['status'] == True:
                     interval = create_plan['response_data']['data']['interval']
@@ -142,9 +175,11 @@ class CreatePlan(APIView):
                     print('plan code>> ', plan_code)
                     
                     payment = PaymentPlan.objects.create(owner=user, name=name,
-                                               interval=interval, amount=amount,
-                                               description=description, plan_id=plan_id,
-                                               plan_code=plan_code, invoice_limit=invoice_limit)
+                                                         interval=interval, amount=amount_int,
+                                                         description=description, 
+                                                         plan_id=plan_id,
+                                                         plan_code=plan_code, 
+                                                         invoice_limit=invoice_limit)
                     payment.save()
                     print('payment >>', payment)
                 interval = plan_interval(interval)
@@ -159,32 +194,43 @@ class CreatePlan(APIView):
 def get_plan(plan_id):
     plan = get_object_or_404(PaymentPlan, plan_id=plan_id)
     return plan
-
+ 
 
 class CreateSubscription(APIView):
     """"Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
     def post(self, request, plan_id):
         if request.user.is_authenticated:   
-            customer = request.user.email
+            customer_email = request.user.email
             plan = get_plan(plan_id)
+            start_date = request.POST.get('start_date', None)
 
-            if not customer or not plan:
+            if not customer_email or not plan:
                 return Response({'message': 'Request body incomplete, ensure all required fields are complete!'
                                  }, status=status.HTTP_400_BAD_REQUEST)
             
             # try:
-            create_sub = paystack.create_subscription(plan=plan.plan_code, customer=customer)
+            create_sub = paystack.create_subscription(plan=plan.plan_code, customer=customer_email)
             print('create sub >>>', create_sub)
-            # if create_sub['response_data']['data']['status'] == 'active':
             if create_sub['response_data']['status'] == True:
+                next_payment_date = create_sub['response_data']['data']['next_payment_date']
+                sub = Subscription.objects.create(customer=request.user,
+                                                plan=plan,
+                                                amount=plan.amount,
+                                                status='active',
+                                                start_date=start_date,
+                                                next_payment_date=next_payment_date,
+                                                email_token=create_sub['response_data']['data']['email_token'],
+                                                subscription_code=create_sub['response_data']['data']['subscription_code']
+                                                )
+                sub.save()
                 return Response({"message": f"Subscription for the plan: {plan.name} created successfully. Thank you.",
-                                 'create_sub':create_sub},
-                                 status=status.HTTP_201_CREATED)
+                                'create_sub':create_sub},
+                                status=status.HTTP_201_CREATED)
             else:
                 return Response({"message": "Customer prolly hasn't done a transaction before hmmm.",
-                                 'create_sub':create_sub},
-                                 status=status.HTTP_400_BAD_REQUEST
-                                 )
+                                'create_sub':create_sub},
+                                status=status.HTTP_400_BAD_REQUEST
+                                )
 
 
-  
+# TODO: make migrations for payments, subscription

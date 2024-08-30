@@ -60,18 +60,23 @@ class PayStack:
         response = requests.post(url, headers=self.headers, data=payload)
         print('response >>>', response)
         response_data = response.json()
-
-        return {'status': response.status_code,
-                "message": "Plan created successfully.", 
-                'response_data': response_data}
+        if response_data['status'] == True:
+            return {'status': response.status_code,
+                    "message": "Plan created successfully.", 
+                    'response_data': response_data}
+        else:
+            return {'status': response.status_code,
+                    "message": "Plan could not be created.", 
+                    'response_data': response_data}
 
     # def list_transactions(self)
 
-    def create_subscription(self, customer, plan):
+    def create_subscription(self, customer, plan, invoice_limit=None):
         url="https://api.paystack.co/subscription"
         payload={
             "customer": customer, 
-            "plan": plan
+            "plan": plan,
+            "invoice_limit": invoice_limit
             }
         
         response = requests.post(url, headers=self.headers, data=payload)
