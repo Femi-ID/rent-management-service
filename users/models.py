@@ -65,7 +65,7 @@ class User(AbstractUser, PermissionsMixin):
                                     help_text="This field should be available for a user-type (Landlord) profile")
     company_website = models.CharField(max_length=200, blank=True,
                                        help_text="This field should be available for a user-type (Landlord) profile")
-    user_type = models.CharField(max_length=8, choices=UserType.choices, default=UserType.TENANT, null=True)
+    user_type = models.CharField(max_length=8, choices=UserType, default=UserType.TENANT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -73,7 +73,7 @@ class User(AbstractUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['password']
+    REQUIRED_FIELDS = ['password', 'user_type']
 
     class Meta:
         ordering = ['-created_at']

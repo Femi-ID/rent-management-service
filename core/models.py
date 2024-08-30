@@ -17,7 +17,7 @@ class House(models.Model):
     # availability = models.BooleanField()
 
     def __str__(self):
-        return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license} >> available: {self.availability}'
+        return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license}'
 
 
 class HouseUnit(models.Model):

@@ -15,9 +15,4 @@ class Migration(migrations.Migration):
             name='date_of_birth',
             field=models.DateField(null=True),
         ),
-        migrations.AlterField(
-            model_name='user',
-            name='user_type',
-            field=models.CharField(choices=[('Landlord', 'Landlord'), ('Tenant', 'Tenant')], default='Tenant', max_length=8, null=True),
-        ),
     ]
