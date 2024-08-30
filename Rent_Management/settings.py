@@ -216,8 +216,8 @@ DJOSER = {
 
 }
 
-SITE_NAME = 'RENT PADI'
-DOMAIN = 'https://rent-man.vercel.app' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
+SITE_NAME = 'RENT PADII'
+DOMAIN = 'rent-man.vercel.app' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
 
 # Email config
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
