@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.PositiveIntegerField()),
+                ('email', models.EmailField()),
                 ('reference', models.CharField(max_length=100)),
                 ('is_verified', models.BooleanField(default=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

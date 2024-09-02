@@ -1,17 +1,18 @@
 from datetime import timedelta, timezone
 from celery import shared_task
 from notifications.utils import send_notification
-from core.models import LeaseAgreement, HouseUnit
+from core.models import HouseUnit
 from django.core.mail import send_mail
 from users.models import User
+from payments.models import Subscription, Payment
 
 @shared_task
 def check_rent_due_date(self):
     today_date = timezone.now().date() # get the current date
     
     # Check for rent due in 30 days
-    rent_due_soon = LeaseAgreement.objects.filter(rent_due_date = today_date + timedelta(days=30)) # get all lease agreements with rent due in 30 days
-
+    rent_due_soon = Subscription.objects.filter(next_payment_date = today_date + timedelta(days=30)) # TODO: Check to include the status of the subscription to the filter
+   
     #send email to the tenant
     for lease in rent_due_soon:
         send_notification(
@@ -23,7 +24,7 @@ def check_rent_due_date(self):
 
 
     # check for rent due today
-    rent_due = LeaseAgreement.objects.filter(rent_due_date = today_date) # get all lease agreements with rent due today
+    rent_due = Subscription.objects.filter(rent_due_date = today_date) # TODO: Check to include the status of the subscription to the filter
 
     #send email to the tenant
     for lease in rent_due:
@@ -35,7 +36,7 @@ def check_rent_due_date(self):
         
 
     # check for rent due in 1 day
-    rent_due_tomorrow = LeaseAgreement.objects.filter(rent_due_date = today_date + timedelta(days=1))
+    rent_due_tomorrow = Subscription.objects.filter(rent_due_date = today_date + timedelta(days=1)) # TODO: Check to include the status of the subscription to the filter
 
     #send email to the tenant
     for lease in rent_due_tomorrow:
@@ -47,7 +48,7 @@ def check_rent_due_date(self):
         
     
     # check for rent overdue
-    rent_overdue = LeaseAgreement.objects.filter(rent_due_date__lt = today_date)
+    rent_overdue = Subscription.objects.filter(rent_due_date__lt = today_date) # TODO: Check to include the status of the subscription to the filter
 
     #send email to the tenant
     for lease in rent_overdue:
@@ -87,8 +88,8 @@ def send_ticket_notification_to_landlord(user_id, unit_id):
     send_mail(
         'New Ticket Notification',
         f'Your tenant: {user.email} has made a ticket for {house_unit.unit_number}.',
-        'process.env.EMAIL_HOST_USER', #change to your email host user
-        [house_unit.house.owner.email],   
+        'process.env.EMAIL_HOST_USER', # This is the sender email
+        [house_unit.house.owner.email],   # This is the receiver email
         fail_silently=False,
     )
 
@@ -103,7 +104,7 @@ def send_email_upon_payment(user_id, house_unit_id):
     send_mail(
         'Rent Payment Notification',
         f'Your tenant: {user.email} has paid their rent for {house_unit.unit_number}.',
-        'process.env.EMAIL_HOST_USER', #change to your email host user
-        [house_unit.house.owner.email],   
+        'process.env.EMAIL_HOST_USER', # This is the sender email
+        [house_unit.house.owner.email], # This is the receiver email
         fail_silently=False,
     )
