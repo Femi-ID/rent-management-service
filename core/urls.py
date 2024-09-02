@@ -10,7 +10,7 @@ urlpatterns = [
 
      
     path('register/unit', views.RegisterUnitView.as_view(), name="registerUnit"),
-    path('register/<str:pk>/', views.RegisterUnitView.as_view(), name="registerUnitWithHouse"),
+    path('register/<str:pk>/', views.RegisterUnitUnderHouseView.as_view(), name="registerUnitWithHouse"),
     path('unitList/', views.UnitListView.as_view(), name = "unitList"), 
     path('unit/<str:pk>', views.UnitDetailsView.as_view(), name = "unitDetails"),
     path('unit/delete/<str:pk>', views.DeleteUnitView.as_view(), name = "delete"), 

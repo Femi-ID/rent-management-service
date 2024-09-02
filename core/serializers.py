@@ -21,10 +21,10 @@ class HouseSerializer(serializers.ModelSerializer):
 
 
 class HouseUnitSerializer(serializers.ModelSerializer):
-    house = serializers.PrimaryKeyRelatedField(read_only=True) 
+    house = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True) 
     unit_number = serializers.CharField()
     # unit_image = serializers.ImageField()
-    unit_type = serializers.CharField()
+    unit_type = serializers.CharField() 
     description = serializers.CharField()
     availability = serializers.BooleanField()
     rent_price = serializers.IntegerField()

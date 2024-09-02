@@ -165,10 +165,10 @@ class HouseDetailsView(APIView):
 
 # -------------------------THE BEGINNING OF UNITS CLASSES --------------------#
 # Register a Unit
-class RegisterUnitView(APIView):
+class RegisterUnitUnderHouseView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, pk=None):
+    def post(self, request, pk):
         
         if not request.user.is_authenticated:
             return Response({
@@ -182,17 +182,15 @@ class RegisterUnitView(APIView):
                 'isSuccess': False
             }, status=403)
         
-        house = None
-        if pk:
-            try:
-                house = House.objects.select_related('owner').get(pk=pk)
+        try:
+            house = House.objects.select_related('owner').get(pk=pk)
           
-            except House.DoesNotExist:
-                return Response({
-                    'msg': 'House not found',
-                    'isSuccess': False
-                }, status=404)
-
+        except House.DoesNotExist:
+            return Response({
+                'msg': 'House not found',
+                'isSuccess': False
+            }, status=404)
+        
         existing_unit = HouseUnit.objects.filter(unit_number=request.data['unit_number']).exists()
         
         if existing_unit:
@@ -211,6 +209,44 @@ class RegisterUnitView(APIView):
                 'isSuccess': True   
             }, status=201)
         return Response(serializer.errors, status=400)
+
+# Register Unit not associated with a house
+class RegisterUnitView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({
+                'msg': 'Authentication credentials were not provided.',
+                'isSuccess': False
+                }, status=401)
+
+        if request.user.user_type != 'Landlord':
+            return Response({
+                'msg': 'User does not have the correct role to register a Unit.',
+                'isSuccess': False
+            }, status=403)
+        
+        existing_unit = HouseUnit.objects.filter(unit_number=request.data['unit_number']).exists()
+        
+        if existing_unit:
+            return Response({
+                'msg': 'Unit with specified unit number already exists',
+                'isSuccess': False
+            }, status=400)
+
+        serializer = HouseUnitSerializer(data=request.data)
+        if serializer.is_valid():
+            unit = serializer.save()
+            return Response({
+                "msg": "Unit added successfully",
+                "uuid": unit.pk,
+                "data": serializer.data, 
+                'isSuccess': True   
+            }, status=201)
+        return Response(serializer.errors, status=400)
+
+
 
 # View a specific Unit
 class UnitDetailsView(APIView):
