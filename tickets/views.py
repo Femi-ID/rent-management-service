@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, status
 from core.models import HouseUnit
-from notifications.tasks import send_ticket_notification_to_tenant, send_ticket_notification_to_landlord
+from notifications.utils import send_ticket_notification_to_tenant
 from tickets.models import Ticket
 from tickets.serializers import TicketSerializer
 
@@ -40,9 +40,7 @@ class CreateTickets(APIView):
         if serializer.is_valid():
             # save the data into the database
             ticket = serializer.save()
-            print('Email sent successfully before')
-            send_ticket_notification_to_landlord.delay(request.user.id, pk)
-            print('Email sent successfully')
+
             return Response({
                 "msg": "Ticket added successfully",
                 "id": ticket.pk,
@@ -129,11 +127,10 @@ class TicketUpdateView(APIView):
             
             if old_status != 'Open' and updated_ticket.status == 'Open' and request.user.user_type == 'Landlord':
 
-                send_ticket_notification_to_tenant.delay(request.user.id, updated_ticket.unit.id)
-            
+                send_ticket_notification_to_tenant(ticket.unit.house.owner.id, ticket.unit.id)
             return Response({
                 "msg": "Update Successful",
-                "data": serializer.data, 
+                "data": updated_ticket, 
                 "isSuccess": True
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
