@@ -261,7 +261,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULE = {
     'check-rent-due-dates-daily': {
         'task': 'notification.tasks.check_rent_due_dates',
-        'schedule': crontab(minute='*'),  # Runs daily at midnight
+        'schedule': crontab(minute= 0, hour=0), # run the task at midnight
     },
 }
 
