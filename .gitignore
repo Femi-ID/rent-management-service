@@ -6,3 +6,6 @@ __pycache__
 .venv
 backup.json
 /__pycache__/**
+
+ticekts/migrations
+notifications/migrations

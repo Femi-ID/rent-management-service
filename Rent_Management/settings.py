@@ -247,7 +247,6 @@ DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
 
-
 # Celery configuration
 # use a managed redis service when deploying to production
 # make sure to install redis locally for development
