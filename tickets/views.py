@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, status
 from core.models import HouseUnit
-from notifications.utils import send_ticket_notification_to_tenant
+from notifications.utils import send_ticket_notification_to_tenant, send_ticket_notification_to_landlord
 from tickets.models import Ticket
 from tickets.serializers import TicketSerializer
 
@@ -40,6 +40,8 @@ class CreateTickets(APIView):
         if serializer.is_valid():
             # save the data into the database
             ticket = serializer.save()
+
+            send_ticket_notification_to_landlord(request.user.id, unit.id)
 
             return Response({
                 "msg": "Ticket added successfully",
@@ -127,7 +129,7 @@ class TicketUpdateView(APIView):
             
             if old_status != 'Open' and updated_ticket.status == 'Open' and request.user.user_type == 'Landlord':
 
-                send_ticket_notification_to_tenant(ticket.unit.house.owner.id, ticket.unit.id)
+                send_ticket_notification_to_tenant(ticket.unit.id)
             return Response({
                 "msg": "Update Successful",
                 "data": updated_ticket, 
