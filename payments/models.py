@@ -33,8 +33,10 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=PaymentStatus, default=PaymentStatus.PENDING)
     transaction_id = models.BigIntegerField(blank=True ,null=True)
-    customer_code = models.CharField(max_length=20)
-    authorization_code = models.CharField(max_length=20)
+    customer_code = models.CharField(max_length=20, null=True)
+    authorization_code = models.CharField(max_length=20, null=True)
+    authorization_url = models.URLField(max_length=70, editable=False, unique=True,
+                                        help_text='redirection link for user to make payment.')
     # update the status in the view
 
     class Meta:
@@ -43,9 +45,9 @@ class Payment(models.Model):
     def __str__(self) -> str:
         return f'{self.user} >> amount: {self.amount}, verified: {self.is_verified}'
     
-    def save(self, *args, **kwargs):
-        self.amount = self.amount * 100
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.amount = self.amount * 100
+    #     return super().save(*args, **kwargs)
 
 
 class PaymentPlan(models.Model):
