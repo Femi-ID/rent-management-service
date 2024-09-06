@@ -25,10 +25,10 @@ class AcceptPayment(APIView):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
-            email = request.data.get('email') # may input tenant's email here for onboarding
-            # body_unicode = request.body.decode('utf-8')
-            # body = json.loads(body_unicode)
-            # email = body['email']
+            # email = request.data.get('email') # may input tenant's email here for onboarding
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            email = body['email']
 
             amount = int(house_unit.rent_price*100)
             if not email:
