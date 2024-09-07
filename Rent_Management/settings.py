@@ -202,7 +202,7 @@ DJOSER = {
     'SEND_CONFIRMATION_EMAIL': True,
     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
     'USER_CREATE_PASSWORD_RETYPE': True, # pass re-password to /users endpoint.
-    'ACTIVATION_URL': 'auth/activate/?uid={uid}&token={token}', # url sent to the email to activate new user
+    'ACTIVATION_URL': 'auth/activate/{uid}/{token}', # url sent to the email to activate new user
 
     # reset user password
     'PASSWORD_RESET_CONFIRM_URL': 'password-reset/{uid}/{token}', # wil be appended to DOMAIN and sent to user email

@@ -11,7 +11,8 @@ from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
 from .serializers import PaymentSerializer
-
+from .enums import PaymentStatus
+#TODO: remember to delete the payments migrations and makemigrations.
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
@@ -24,7 +25,11 @@ class AcceptPayment(APIView):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
-            email = request.POST.get('email') # tenant's email here for onboarding
+            # email = request.data.get('email') # may input tenant's email here for onboarding
+            body_unicode = request.body.decode('utf-8')
+            body = json.loads(body_unicode)
+            email = body['email']
+
             amount = int(house_unit.rent_price*100)
             if not email:
                 return Response({"error": "Email must be passed as a request body."},
@@ -39,7 +44,8 @@ class AcceptPayment(APIView):
                                                      email=email, 
                                                      house_unit=house_unit,
                                                      reference=reference,
-                                                     authorization_url=authorization_url)
+                                                     authorization_url=authorization_url
+                                                    )
                 print('payment obj', payment_obj)
                 payment_serializer = PaymentSerializer(payment_obj)
                 return Response({'initialize_payment': initialize_payment,
@@ -63,60 +69,67 @@ class VerifyPayment(APIView):
             print(ref)
             print('transaction status >>>', transaction_status)
             print('verify transaction >>>',verify_transaction)
+            
+            print('amount...', verify_transaction['response_data']['data']['amount'])
             house_unit = get_house_unit(house_unit_id=house_unit_id)
+            print('rent price >>>',house_unit.rent_price)
             payment = Payment.objects.get(reference=ref)
+            print('payment::::', payment)
 
             if house_unit:
-                try:
-                    if verify_transaction['response_data']['data']['amount'] == house_unit.rent_price*100:
-                        
-                        def t_status(transaction_status):
-                            match transaction_status:
-                                case 'success':
-                                    payment.transaction_id = verify_transaction['response_data']['data']['id']
-                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code']
-                                    payment.authorization_code = verify_transaction['response_data']['data']['authorization']['authorization_code'], None
-                                    payment.is_verified = True
-                                    payment.save()
-                                    return Response({"message": "Payment confirmed. Thank you.",
-                                                     'verify_transaction':verify_transaction},
-                                                     status=status.HTTP_200_OK)
-                                case 'failed':
-                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
-                                    payment.save()
-                                    return Response({"message": "Payment failed. Please try again.",
-                                                     'verify_transaction':verify_transaction},
-                                                     status=status.HTTP_400_BAD_REQUEST)
-                                case 'abandoned':
-                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
-                                    payment.save()
-                                    return Response({"message": "Payment abandoned. Transaction not completed.",
-                                                     'verify_transaction':verify_transaction},
-                                                     status=status.HTTP_100_CONTINUE)
-                                case 'reversed':
-                                    payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                    payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
-                                    payment.save()
-                                    return Response({"message": "Payment was reversed.",
-                                                     'verify_transaction':verify_transaction},
-                                                     status=status.HTTP_100_CONTINUE)
-                                case _:
-                                    return Response({"message": "Unable to verify payment.",
-                                                     'verify_transaction':verify_transaction},
-                                                     status=status.HTTP_400_BAD_REQUEST)
-                        t_status = t_status(transaction_status)
-                        return t_status
-                    else:
-                        # this else condition will never be triggered because the transaction price is already set to the rent price 
-                        return Response({'message': "The amount for the transaction is not equal to the rent price."},
-                                        status=status.HTTP_406_NOT_ACCEPTABLE)
-                except Exception as e:
-                    return Response({
-                        "success": False,
-                        "message": f'Your payment was not processed: {e}'
-                        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # try:
+                if verify_transaction['response_data']['data']['amount'] == house_unit.rent_price*100:
+                    
+                    def t_status(transaction_status):
+                        match transaction_status:
+                            case 'success':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id']
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code']
+                                payment.authorization_code = verify_transaction['response_data']['data']['authorization']['authorization_code']
+                                payment.is_verified = True
+                                payment.status = PaymentStatus.SUCCESS
+                                payment.save()
+                                payment_serializer = PaymentSerializer(payment)
+                                return Response({"message": "Payment confirmed. Thank you.",
+                                                    'verify_transaction':verify_transaction,
+                                                    'payment_obj': payment_serializer.data},
+                                                    status=status.HTTP_200_OK)
+                            case 'failed':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                payment.save()
+                                return Response({"message": "Payment failed. Please try again.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_400_BAD_REQUEST)
+                            case 'abandoned':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                payment.save()
+                                return Response({"message": "Payment abandoned. Transaction not completed.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_100_CONTINUE)
+                            case 'reversed':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                payment.save()
+                                return Response({"message": "Payment was reversed.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_100_CONTINUE)
+                            case _:
+                                return Response({"message": "Unable to verify payment.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_400_BAD_REQUEST)
+                    t_status = t_status(transaction_status)
+                    return t_status
+                else:
+                    # this else condition will never be triggered because the transaction price is already set to the rent price 
+                    return Response({'message': "The amount for the transaction is not equal to the rent price."},
+                                    status=status.HTTP_406_NOT_ACCEPTABLE)
+                # except Exception as e:
+                #     return Response({
+                #         "success": False,
+                #         "message": f'Your payment was not processed: {e}'
+                #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
             
 class CreatePlan(APIView):
@@ -126,14 +139,14 @@ class CreatePlan(APIView):
         # TODO: low-priority feature; add the user_type to the jwt payload
         if request.user.is_authenticated and request.user.user_type == 'Landlord':
             user = request.user
-            name = request.POST.get('name')
-            interval = request.POST.get('interval')
-            amount = request.POST.get('amount')
-            amount_int = int(amount) * 100
-            print('amount >>', type(amount))
+            name = request.data.get('name')
+            interval = request.data.get('interval')
+            amount = request.data.get('amount')
+            amount_int = int(amount)*100
+            # print('amount >>', type(amount))
             amount_str = str(amount_int)
-            description = request.POST.get('description', None)
-            invoice_limit = request.POST.get('invoice_limit', None) # no of times to charge the customer
+            description = request.data.get('description', None)
+            invoice_limit = request.data.get('invoice_limit', None) # no of times to charge the customer
 
             if not name or not interval:
                 return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
@@ -166,6 +179,7 @@ class CreatePlan(APIView):
                                              'create__plan':create_plan},
                                              status=create_plan['status'])
             try:
+                #TODO: The amount should be generated based on the plan_interval
                 create_plan = paystack.create_plan(name=name, interval=interval, amount=amount_str)
                 print('create_plan >>>', create_plan)
                 if create_plan['response_data']['status'] == True:
@@ -175,7 +189,7 @@ class CreatePlan(APIView):
                     print('plan code>> ', plan_code)
                     
                     payment = PaymentPlan.objects.create(owner=user, name=name,
-                                                         interval=interval, amount=amount_int,
+                                                         interval=interval, amount=amount_str,
                                                          description=description, 
                                                          plan_id=plan_id,
                                                          plan_code=plan_code, 
@@ -202,7 +216,7 @@ class CreateSubscription(APIView):
         if request.user.is_authenticated:   
             customer_email = request.user.email
             plan = get_plan(plan_id)
-            start_date = request.POST.get('start_date', None)
+            start_date = request.data.get('start_date', None) # this should be the landlord on the create endpoint
 
             if not customer_email or not plan:
                 return Response({'message': 'Request body incomplete, ensure all required fields are complete!'
