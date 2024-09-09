@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import EmailField
 from users.models import User
 import secrets
 from .paystack import PayStack
@@ -25,36 +26,28 @@ from core.models import HouseUnit
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     house_unit = models.ForeignKey(HouseUnit, on_delete=models.CASCADE, related_name='payments')
+    email = models.EmailField()
     amount = models.PositiveIntegerField()
     reference = models.CharField(max_length=100) 
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=PaymentStatus, default=PaymentStatus.PENDING)
     transaction_id = models.BigIntegerField(blank=True ,null=True)
-    customer_code = models.CharField(max_length=20)
-    authorization_code = models.CharField(max_length=20)
+    customer_code = models.CharField(max_length=20, null=True)
+    authorization_code = models.CharField(max_length=20, null=True)
+    authorization_url = models.URLField(max_length=70, editable=False, unique=True,
+                                        help_text='redirection link for user to make payment.')
     # update the status in the view
 
     class Meta:
         ordering = ('-created_at',)
 
     def __str__(self) -> str:
-        return f'{self.user} >> amount: {self.amount}, verified: {self.verified}'
+        return f'{self.user} >> amount: {self.amount}, verified: {self.is_verified}'
     
-    def save(self, *args, **kwargs):
-        self.amount = self.amount * 100
-        return super().save(*args, **kwargs)
-
     # def save(self, *args, **kwargs):
-    #     while not self.reference:
-    #         reference = secrets.token_urlsafe(50)
-    #         object_with_similar_ref = Payment.objects.filter(reference=reference)
-    #         if not object_with_similar_ref:
-    #             self.ref = reference
-    #             super.save(*args, **kwargs)
-
-    # def amount(self):
-    #     return int(self.amount) * 100
+    #     self.amount = self.amount * 100
+    #     return super().save(*args, **kwargs)
 
 
 class PaymentPlan(models.Model):
@@ -74,12 +67,16 @@ class PaymentPlan(models.Model):
         return f'Owner: {self.owner}, Plan Name: {self.name}, Plan CODE: {self.plan_code}'
 
 
-# class Subscription(models.Model):
-#     customer =models.ForeignKey(User, on_delete=models.CASCADE)
-#     plan = models.ForeignKey(PaymentPlan, on_delete=models.CASCADE, related_name='subscriptions')
-#     amount = models.PositiveIntegerField()
-#     status = models.CharField(max_length=20, choices=PaymentStatus, default='active')
-#     start_date = models.DateTimeField()
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
+class Subscription(models.Model):
+    customer =models.ForeignKey(User, on_delete=models.CASCADE) # customer's email address or code
+    plan = models.ForeignKey(PaymentPlan, on_delete=models.CASCADE, related_name='subscriptions')
+    amount = models.PositiveIntegerField()
+    status = models.CharField(max_length=20, choices=PaymentStatus, default='active')
+    start_date = models.DateTimeField(null=True, blank=True)
+    next_payment_date = models.DateTimeField()
+    customer_id_or_code = models.CharField(null=True, blank=True)
+    email_token = models.CharField()
+    subscription_code = models.CharField(max_length=30)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    

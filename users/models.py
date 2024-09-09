@@ -7,26 +7,26 @@ import uuid
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password, user_type, **extra_fields):
+    def create_user(self, password, **extra_fields): # email, user_type,
         # **extra_fields are the fields that come with the default django user model
-        if not email:
-            raise ValueError("Email must be provided!!")
+        # if not email:
+        #     raise ValueError("Email must be provided!!")
         if not password:
             raise ValueError("Password must be provided!!")
         
         # to create the user object
         user = self.model(
-            email=self.normalize_email(email),
+            # email=self.normalize_email(email),
             # first_name=first_name,
             # last_name=last_name,
-            user_type=user_type,
+            # user_type=user_type,
             **extra_fields)
 
         user.set_password(password)
         user.save()
         return user
     
-    def create_superuser(self, email, password, user_type,  **extra_fields):
+    def create_superuser(self, password, user_type,  **extra_fields):
         # other fields:  first_name, last_name, date_of_birth,
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -41,11 +41,13 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("is_active") is not True:
             raise ValueError("Superuser is_active must be 'True'")
 
-        return self.create_user(email=email, password=password, 
+        return self.create_user(password=password,
+                                # email=email, 
                                 # date_of_birth=date_of_birth,
                                 # first_name=first_name,
                                 # last_name=last_name,
-                                user_type=user_type, **extra_fields)
+                                user_type=user_type, 
+                                **extra_fields)
 
 
 class User(AbstractUser, PermissionsMixin):
@@ -56,14 +58,14 @@ class User(AbstractUser, PermissionsMixin):
     middle_name = models.CharField(max_length=150, blank=True, null=True) 
     email = models.EmailField(max_length=250, unique=True)
     phone_number = models.CharField(max_length=14, null=True)
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(null=True)
     job_title = models.CharField(max_length=100, blank=False, null=True,
                                  help_text="This field should be available for a user-type (Landlord) profile")
     company_name = models.CharField(max_length=200, blank=False, null=True, 
                                     help_text="This field should be available for a user-type (Landlord) profile")
     company_website = models.CharField(max_length=200, blank=True,
                                        help_text="This field should be available for a user-type (Landlord) profile")
-    user_type = models.CharField(max_length=8, choices=UserType.choices, default=UserType.TENANT)
+    user_type = models.CharField(max_length=8, choices=UserType, default=UserType.TENANT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -71,7 +73,7 @@ class User(AbstractUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['user_type', 'date_of_birth']
+    REQUIRED_FIELDS = ['password', 'user_type']
 
     class Meta:
         ordering = ['-created_at']

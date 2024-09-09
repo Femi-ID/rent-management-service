@@ -1,8 +1,14 @@
-# RENT MANAGEMENT SERVICE (RENTPADDI)
+# Rent Management Service (RentPaddi)
 
 ## Project Overview
 
 The Rent Management API serves as the backend for the creation, authorization of new users (Landlords and Tenants), payment of rent in the RENTPADDI application. It allows authenticated users to apply to be a potential tenant for available houses listed. Key features include landlord specific app for the property management, statistics view on the properties i.e amount generated, cost of maintenance, number of tenants, vacant properties available for rent among other features.
+
+
+## Getting Started
+
+To get started with the project, refer to the [Installation Instructions](#installation-instructions) and [Usage Instructions](#usage-instructions) sections. Familiarize yourself with the API endpoints by exploring the README files for each individual application. T[API Documentation](https://rent-management-service.onrender.com/docs/) provided.
+
 
 ## Installation Instructions
 
@@ -75,13 +81,8 @@ The API should now be running locally at [http://localhost:8000/](http://localho
 
 > ### Swagger Doc Feature:
 >
->> The endpoint here implements swagger's feature to test each endpoint in the application with proper documentation. It is useful as its tests each request method with their required parameters. You prefix `/swagger` after the localhost url.
+>> The endpoint here implements swagger's feature to test each endpoint in the application with proper documentation. It is useful as its tests each request method with their required parameters. You prefix `/docs` after the localhost url. You can also make use of the docs hosted at [API Documentation](#api-documentation)
 
-
-
-## Getting Started
-
-To get started with the project, refer to the [Installation Instructions](#installation-instructions) and [Usage Instructions](#usage-instructions) sections. Familiarize yourself with the API endpoints by exploring the [API Documentation](#api-documentation) provided.
 
 ## Configuration
 
@@ -140,7 +141,7 @@ To ensure code quality, follow the instructions in the [Testing Guidelines](#tes
 
 ## API Documentation (if applicable)
 
-You can access the API documentation [here](#api-documentation) when the server is running. It provides comprehensive information on how to use the API endpoints.
+You can access the API documentation [here](https://rent-management-service.onrender.com/docs/) when the server is running. It provides comprehensive information on how to use and consume each of the API endpoints.
 
 ## License Information
 
