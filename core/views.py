@@ -319,8 +319,7 @@ class UnitListView(APIView):
         data = []
         for unit in units:
             unit_data = {
-                "id": unit.pk, 
-                "house_id": unit.house.pk,
+                "id": unit.pk,
                 "data": HouseUnitSerializer(unit).data 
             }
             data.append(unit_data)
@@ -439,7 +438,7 @@ class LeaseAgreementView(APIView):
                 'isSuccess': False
                 }, status=401)
 
-        lease_agreements = LeaseAgreement.filter(house_unit__house__owner_id=request.user.pk)
+        lease_agreements = LeaseAgreement.objects.filter(house_unit__house__owner_id=request.user.pk)
         data = []
         for lease_agreement in lease_agreements:
             unit_data = {

@@ -10,7 +10,7 @@ urlpatterns = [
     path('update/<str:pk>', views.HouseUpdateView.as_view(), name = "houseUpdate"),
 
      
-    path('register/unit', views.RegisterUnitView.as_view(), name="registerUnit"),
+    # path('register/unit', views.RegisterUnitView.as_view(), name="registerUnit"),
     path('register/<str:pk>/', views.RegisterUnitView.as_view(), name="registerUnitWithHouse"),
     path('unitList/', views.UnitListView.as_view(), name = "unitList"), 
     path('unit/<int:pk>', views.UnitDetailsView.as_view(), name = "unitDetails"),
