@@ -4,14 +4,15 @@ from django.urls import path
 
 urlpatterns = [
     path('houseList/', views.HouseListView.as_view(), name = "house-list"), 
+    path('list-houses/<str:owner_id>/', views.ListHousesAndUnits.as_view(), name='list-house'),
     path('houseDetails/<str:pk>', views.HouseDetailsView.as_view(), name = "houseDetails"), 
     path('delete/<str:pk>', views.DeleteHouseView.as_view(), name = "delete"), 
-    path('register/', views.RegisterHouseView.as_view(), name = "registerHouse"),
+    path('create-house/', views.CreateHouse.as_view(), name='create-house'),
     path('update/<str:pk>', views.HouseUpdateView.as_view(), name = "houseUpdate"),
 
      
     # path('register/unit', views.RegisterUnitView.as_view(), name="registerUnit"),
-    path('register/<str:pk>/', views.RegisterUnitView.as_view(), name="registerUnitWithHouse"),
+    path('register/<str:house_id>/', views.CreateHouseUnit.as_view(), name="registerUnit"),
     path('unitList/', views.UnitListView.as_view(), name = "unitList"), 
     path('unit/<int:pk>', views.UnitDetailsView.as_view(), name = "unitDetails"),
     path('unit/delete/<int:pk>', views.DeleteUnitView.as_view(), name = "delete"), 

@@ -1,43 +1,45 @@
 import uuid
 from rest_framework import serializers 
 from .models import House, HouseUnit, LeaseAgreement
-
+ 
+    
 class HouseSerializer(serializers.ModelSerializer):
-    address = serializers.CharField(max_length=255, required=True)
-    city = serializers.CharField(max_length=50, required=True)
-    state = serializers.CharField(max_length=50, required=True)
-    reg_license = serializers.CharField(max_length=100, required=True)
-    number_of_units = serializers.IntegerField(min_value=1)
-
+    name_of_owner = serializers.SerializerMethodField()
+    # TODO: read up how to implement nested modelSerializers
+    # house_unit_details = serializers.SerializerMethodField()
+    no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = House
-        fields = ["address", "city", "state", "reg_license", "number_of_units"]
+        fields = ['id', 'address', 'owner', 'name_of_owner', 'number_of_units', 'reg_license', 'no_of_house_units']
+        read_only_fields = ['owner']
 
-    def create(self, validated_data):
-        owner = self.context.get('owner')
-        validated_data['owner'] = owner
-        house = House.objects.create(**validated_data)
-        return house 
+    def get_name_of_owner(self, object):
+        return object.owner.email
 
+    def get_no_of_house_units(self, object):
+        return object.units.count()
+
+    # def get_house_unit_details(self, object):
+    #     house_units = object.units
+    #     lists = []
+    #     for unit in house_units:
+    #         lists.append(unit)
+    #         return lists
+    
+    
 
 class HouseUnitSerializer(serializers.ModelSerializer):
-    house = serializers.PrimaryKeyRelatedField(read_only=True) 
-    unit_number = serializers.CharField()
-    unit_type = serializers.CharField()
-    description = serializers.CharField()
-    availability = serializers.BooleanField()
-    rent_price = serializers.IntegerField()
-
+    name_of_owner = serializers.SerializerMethodField()
+    # no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = HouseUnit
-        fields = ["house", "unit_number", "rent_price", "availability","unit_type", "description"]
-    
-    def create(self, validated_data):
-        house = self.context.get('house')
-        validated_data['house'] = house
-        unit = HouseUnit.objects.create(**validated_data)
-        return unit 
+        fields = ['id', 'house', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner']
 
+    def get_name_of_owner(self, object):
+        return object.house.owner.email
+    
+    # def get_no_of_house_units(self, object):
+    #     return object.units[:]
 
 class LeaseAgreementSerializer(serializers.ModelSerializer):
     document = serializers.FileField()

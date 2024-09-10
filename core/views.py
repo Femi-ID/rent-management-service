@@ -1,46 +1,71 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import permissions
 from .models import House, HouseUnit, LeaseAgreement
 from .serializer import HouseSerializer, HouseUnitSerializer, LeaseAgreementSerializer
 from rest_framework.response import Response 
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 
-# create a House
-class RegisterHouseView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
+# create a House  
+class CreateHouse(APIView):
+    """View to add/create houses. (Only Landlords are allowed to do so.)"""
     def post(self, request):
-        if not request.user.is_authenticated:
-            return Response({
-                'msg': 'Authentication credentials were not provided.',
-                'isSuccess': False
-                }, status=401)
+        user = request.user
+        print(user)
+        if user.is_authenticated and user.user_type == 'Landlord':
 
-        if request.user.user_type != 'Landlord':
-            return Response({
-                'msg': 'User does not have the correct role to register a house.',
-                'isSuccess': False
-            }, status=403)
+            existing_house = House.objects.filter(reg_license=request.data['reg_license']).exists()
+            if existing_house:
+                return Response({
+                    'msg': 'House with specified details already exists',
+                    'isSuccess': False
+                }, status=400)
+
+            try:
+                address = request.data['address']
+                city = request.data['city']
+                state = request.data['state']
+                reg_license = request.data['reg_license']
+                number_of_units = request.data['number_of_units']
+                
+                if not address or not city or not state or not reg_license:
+                    return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                house = House.objects.create(owner=user, address=address, city=city,
+                                            state=state, reg_license=reg_license,
+                                            number_of_units=number_of_units)
+                serializer = HouseSerializer(house)
+                print(house)
+                # use serializers ??
+                return Response({'message': 'Your house details has been added',
+                                'house details': serializer.data},
+                                status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'message': 'Your house details could not be added',
+                                    'error': str(e)},)
+            
+class ListHousesAndUnits(APIView):
+    """View to list the house and house_units belonging to the landlord."""
+    def get(self, request, owner_id):
+        user = request.user
+        if user.is_authenticated and user.user_type == 'Landlord':
+            houses = House.objects.filter(owner=owner_id)
+            if not houses:
+                return Response({'message':"You currently haven't added any house"},
+                                status=status.HTTP_204_NO_CONTENT)
+            
+            serializer = HouseSerializer(houses, many=True)
+            # this should'nt work: houses will return a list of object
+            for house in houses:
+                house_units = HouseUnit.objects.filter(house=house)
+                if house_units:
+                    pass
+            return Response({'message': 'The list of houses you added',
+                                'house details': serializer.data},
+                                status=status.HTTP_200_OK)
         
-        existing_house = House.objects.filter(reg_license=request.data['reg_license']).exists()
-        if existing_house:
-            return Response({
-                'msg': 'House with specified details already exists',
-                'isSuccess': False
-            }, status=400)
-        
-        serializer = HouseSerializer(data=request.data, context={'owner': request.user})
-        if serializer.is_valid():
-            house = serializer.save()
-            return Response({
-                "msg": "House added successfully",
-                "uuid": house.pk,
-                "owner": house.owner.pk,
-                "data": serializer.data,
-                'isSuccess': True
-            }, status=201)
-        return Response(serializer.errors, status=400)
+        # TODO: remove the no of units field on the House model
 
 # Get the list of all house registered
 class HouseListView(APIView):
@@ -56,13 +81,7 @@ class HouseListView(APIView):
         houses = House.objects.filter(owner_id=request.user.pk)
         data = [] 
         for house in houses:
-            # owner_data = {
-            #     "id": house.owner.pk,
-            #     "username": house.owner.username,
-            # }
             house_data = {
-                "id": house.pk,
-                "owner": house.owner.pk,
                 "data": HouseSerializer(house).data 
             }
             data.append(house_data)
@@ -156,8 +175,6 @@ class HouseDetailsView(APIView):
 
         serializer = HouseSerializer(house, many=False)
         return Response({
-            "uuid": house.pk,
-            "owner": house.owner.pk,
             "data": serializer.data,
             "isSuccess": True
         }, status=200)
@@ -165,53 +182,42 @@ class HouseDetailsView(APIView):
 
 # -------------------------THE BEGINNING OF UNITS CLASSES --------------------#
 # Register a Unit
-class RegisterUnitView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, pk=None):
-        
-        if not request.user.is_authenticated:
-            return Response({
-                'msg': 'Authentication credentials were not provided.',
-                'isSuccess': False
-                }, status=401)
-
-        if request.user.user_type != 'Landlord':
-            return Response({
-                'msg': 'User does not have the correct role to register a house.',
-                'isSuccess': False
-            }, status=403)
-        
-        house = None
-        if pk:
+class CreateHouseUnit(APIView):
+    def post(self, request, house_id):
+        user = request.user
+        if user.is_authenticated and user.user_type == 'Landlord':
             try:
-                house = House.objects.select_related('owner').get(pk=pk)
-          
-            except House.DoesNotExist:
-                return Response({
-                    'msg': 'House not found',
-                    'isSuccess': False
-                }, status=404)
+                
+                house = get_object_or_404(House, pk=house_id)
+                unit_number = request.POST.get('unit_number', False)
+                unit_type = request.POST.get('unit_type', False)
+                description = request.POST.get('description', False)
+                rent_price = request.POST.get('rent_price', False)
+                availability = request.POST.get('availability', False)
 
-        existing_unit = HouseUnit.objects.filter(unit_number=request.data['unit_number']).exists()
+                if not (house, unit_number, unit_type, rent_price, availability):
+                    return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                
+                existing_unit = HouseUnit.objects.filter(unit_number=request.data['unit_number']).exists()
         
-        if existing_unit:
-            return Response({
-                'msg': 'Unit with specified unit number already exists',
-                'isSuccess': False
-            }, status=400)
-
-        serializer = HouseUnitSerializer(data=request.data, context={'house': house})
-        if serializer.is_valid():
-            unit = serializer.save()
-            return Response({
-                "msg": "Unit added successfully",
-                "uuid": unit.pk,
-                "data": serializer.data, 
-                'isSuccess': True   
-            }, status=201)
-        return Response(serializer.errors, status=400)
-
+                if existing_unit:
+                    return Response({
+                        'msg': 'Unit with specified unit number already exists',
+                        'isSuccess': False
+                    }, status=400)
+                
+                house_unit = HouseUnit.objects.create(house=house, unit_number=unit_number, 
+                                                    description=description, rent_price=rent_price,
+                                                    availability=availability)
+                serializer = HouseUnitSerializer(house_unit)
+                return Response({'message': 'Your house details has been added',
+                                'house details': serializer.data},
+                                status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'message': 'Your house details could not be added',
+                                'error': str(e)},)
+        
 # View a specific Unit
 class UnitDetailsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -233,8 +239,6 @@ class UnitDetailsView(APIView):
 
         serializer = HouseUnitSerializer(unit, many=False)
         return Response({
-            "id": unit.pk,
-            "house": unit.house.pk,
             "data": serializer.data,
             "isSuccess": True
         }, status=200)
@@ -319,7 +323,6 @@ class UnitListView(APIView):
         data = []
         for unit in units:
             unit_data = {
-                "id": unit.pk,
                 "data": HouseUnitSerializer(unit).data 
             }
             data.append(unit_data)
