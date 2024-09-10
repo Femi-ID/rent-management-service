@@ -3,7 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, status
 from core.models import HouseUnit
-from notifications.utils import send_ticket_notification_to_tenant, send_ticket_notification_to_landlord
 from tickets.models import Ticket
 from tickets.serializers import TicketSerializer
 
@@ -40,17 +39,12 @@ class CreateTickets(APIView):
         if serializer.is_valid():
             # save the data into the database
             ticket = serializer.save()
-
-            send_ticket_notification_to_landlord(request.user.id, unit.id)
-
             return Response({
                 "msg": "Ticket added successfully",
                 "id": ticket.pk,
                 "data": serializer.data,
                 'isSuccess': True
             }, status=status.HTTP_201_CREATED)
-            
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # View all tickets
@@ -112,29 +106,19 @@ class TicketUpdateView(APIView):
         
         if request.user.user_type == 'Landlord':
             allowed_fields = ['category', 'status']
+            data = {key: value for key, value in request.data.items() if key in allowed_fields}
         elif request.user.user_type == 'Tenant':
             allowed_fields = ['subject']
-        else:
-            return Response({
-                'msg': 'User does not have the correct role to update a ticket.',
-                'isSuccess': False
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        data = {key: value for key, value in request.data.items() if key in allowed_fields}
+            data = {key: value for key, value in request.data.items() if key in allowed_fields}
 
-        serializer = TicketSerializer(ticket, data=data, partial=True)
+        serializer = TicketSerializer(instance=ticket, data=data, partial=True, context={'request': request})
         if serializer.is_valid():
-            old_status = ticket.status
-            updated_ticket = serializer.save()
-            
-            if old_status != 'Open' and updated_ticket.status == 'Open' and request.user.user_type == 'Landlord':
-
-                send_ticket_notification_to_tenant(ticket.unit.id)
+            serializer.save()
             return Response({
                 "msg": "Update Successful",
-                "data": updated_ticket, 
+                "data": serializer.data, 
                 "isSuccess": True
-            }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # delete a specific ticket

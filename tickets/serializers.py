@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Ticket
 
-class TicketSerializer(serializers.ModelSerializer):
+class TicketSerializer(serializers.Serializer):
     unit = serializers.PrimaryKeyRelatedField(read_only=True)
     subject = serializers.CharField(max_length=255)
     category = serializers.CharField(max_length=100)
@@ -15,6 +15,5 @@ class TicketSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         unit = self.context.get('unit')
-        if unit:
-            validated_data['unit'] = unit
-        return super().create(validated_data)
+        validated_data['unit'] = unit
+        return Ticket.objects.create(**validated_data)
