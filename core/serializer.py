@@ -40,6 +40,8 @@ class HouseUnitSerializer(serializers.ModelSerializer):
     
     # def get_no_of_house_units(self, object):
     #     return object.units[:]
+    # def get_no_of_house_units(self, object):
+    #     return object.units[:]
 
 class LeaseAgreementSerializer(serializers.ModelSerializer):
     document = serializers.FileField()

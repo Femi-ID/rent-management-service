@@ -248,22 +248,16 @@ PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 # PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 # PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
 
-# Celery configuration
-# use a managed redis service when deploying to production
-# make sure to install redis locally for development
 
-# CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
-# CELERY_BROKER_URL = config('CELERY_BROKER_URL') # 'redis://localhost:6379/0'
-
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-
-# Celery Beat Schedule
-CELERY_BEAT_SCHEDULE = {
-    'check-rent-due-dates-daily': {
-        'task': 'notification.tasks.check_rent_due_dates',
-        'schedule': crontab(minute= 0, hour=0), # run the task at midnight
-    },
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Basic': {
+            'type': 'oauth2'
+      },
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      }
+   }
 }
-
