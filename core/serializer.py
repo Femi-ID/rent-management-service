@@ -29,7 +29,7 @@ class HouseSerializer(serializers.ModelSerializer):
 
 class HouseUnitSerializer(serializers.ModelSerializer):
     name_of_owner = serializers.SerializerMethodField()
-    no_of_house_units = serializers.SerializerMethodField()
+    # no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = HouseUnit
         fields = ['id', 'house', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner', 'no_of_house_units']
@@ -37,5 +37,5 @@ class HouseUnitSerializer(serializers.ModelSerializer):
     def get_name_of_owner(self, object):
         return object.house.owner.email
     
-    def get_no_of_house_units(self, object):
-        return object.units[:]
+    # def get_no_of_house_units(self, object):
+    #     return object.units[:]
