@@ -26,8 +26,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = os.environ.get('SECRET_KEY')
+# SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG')
@@ -244,13 +244,6 @@ PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 # PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 # PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
 
-# SWAGGER_SETTINGS = {
-#     'SECURITY_DEFINITIONS': {
-#         'basic': {
-#             'type': 'basic'
-#         }
-#     },
-# }
 
 SWAGGER_SETTINGS = {
    'SECURITY_DEFINITIONS': {
