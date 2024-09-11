@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView
+# from symbol import decorator
 from .models import Payment, PaymentPlan, Subscription
 from users.models import User
 from rest_framework.response import Response
@@ -12,23 +12,47 @@ from django.http import JsonResponse
 from core.models import HouseUnit
 from .serializers import PaymentSerializer
 from .enums import PaymentStatus
-#TODO: remember to delete the payments migrations and makemigrations.
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
     return house_unit
 
+
 class AcceptPayment(APIView):
-    """The first stage of Paystack transaction. This endpoint accepts the email and amount of the user initializing the transaction.
-    **The landlord is only allowed to send the email of the tenant while the amount is gotten from the rent_price of the house unit.**"""
+    @swagger_auto_schema(
+        operation_description="Initialize a new transaction on Paystack. POST /payments/initialize-payment/{house_unit_id}",
+        manual_parameters=[
+            openapi.Parameter(
+                'house_unit_id',
+                openapi.IN_PATH,
+                description="The ID of the house unit",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="Payment initialized"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def post(self, request, house_unit_id):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
-            # email = request.data.get('email') # may input tenant's email here for onboarding
-            body_unicode = request.body.decode('utf-8')
-            body = json.loads(body_unicode)
-            email = body['email']
+            email = request.data.get('email') # may input tenant's email here for onboarding
+            # body_unicode = request.body.decode('utf-8')
+            # body = json.loads(body_unicode)
+            # email = body['email']
+            print('email::', email)
 
             amount = int(house_unit.rent_price*100)
             if not email:
@@ -56,6 +80,29 @@ class AcceptPayment(APIView):
     
 
 class VerifyPayment(APIView):
+    @swagger_auto_schema(
+        operation_description="Verify and complete a transaction on Paystack. GET /payments/verify-payment/{house_unit_id}",
+        manual_parameters=[
+            openapi.Parameter(
+                'house_unit_id',
+                openapi.IN_PATH,
+                description="The ID of the house unit",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                'ref',
+                openapi.IN_QUERY,
+                description="The ref of an initialized payment.",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(description="Payment successfully verified."),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def get(self, request, house_unit_id):
         """pass reference as a query parameter in the url i.e: 'example.com/?reference=12gwe4323t3y4'"""
         if request.user.is_authenticated:
@@ -133,8 +180,27 @@ class VerifyPayment(APIView):
                 
             
 class CreatePlan(APIView):
-    """The landlord usertype should only be allowed to create a plan."""
+    @swagger_auto_schema(
+        operation_description="Create a payment plan Paystack. POST /payments/create-plan/",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name','interval', 'amount'],
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name of the payment plan.'),
+                'interval': openapi.Schema(type=openapi.TYPE_STRING, description='Frequency of this plan to charge the customer.'),
+                'amount': openapi.Schema(type=openapi.TYPE_INTEGER, description='Amount to charge per transaction for this plan.'),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
+                'invoice_limit': openapi.Schema(type=openapi.TYPE_INTEGER, description='Number of times the user will be charged when subscribed to this plan.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="Payment initialized"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
+    
     def post(self, request):
+        """The landlord usertype should only be allowed to create a plan."""
         # TODO: Calculate the amount equivalent for the interval selected usings signals
         # TODO: low-priority feature; add the user_type to the jwt payload
         if request.user.is_authenticated and request.user.user_type == 'Landlord':
@@ -211,8 +277,30 @@ def get_plan(plan_id):
  
 
 class CreateSubscription(APIView):
-    """"Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
+    @swagger_auto_schema(
+        operation_description="Subscribe to plan created by the landlord. POST create-subscription/{plan_id}/",
+        manual_parameters=[
+            openapi.Parameter(
+                'plan_id',
+                openapi.IN_PATH,
+                description="The ID of the plan the tenant is subscribing to.",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            )
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'start_date': openapi.Schema(type=openapi.FORMAT_DATE, description='The date to start charging the user **"tenant"** for this plan.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="SUBSCRIPTION CREATED SUCCESSFULLy"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def post(self, request, plan_id):
+        """Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
         if request.user.is_authenticated:   
             customer_email = request.user.email
             plan = get_plan(plan_id)
@@ -246,5 +334,3 @@ class CreateSubscription(APIView):
                                 status=status.HTTP_400_BAD_REQUEST
                                 )
 
-
-# TODO: make migrations for payments, subscription

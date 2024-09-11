@@ -15,8 +15,8 @@ from datetime import timedelta
 import dj_database_url
 from decouple import config
 import os
-# from dotenv import load_dotenv
-# load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'accounts', 
     'payments',
     'wallets',
-    'core', 
+    'core',
+    'tickets', 
 
     # added dependencies
     'rest_framework',
@@ -242,3 +243,17 @@ PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
 # PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 # PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
+
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Basic': {
+            'type': 'oauth2'
+      },
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      }
+   }
+}
