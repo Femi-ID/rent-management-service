@@ -1,58 +1,50 @@
 from datetime import timedelta, timezone
 from celery import shared_task
-from notifications.utils import send_notification
-from core.models import HouseUnit
-from django.core.mail import send_mail
+from notifications.utils import send_notification_for_rent_due
 from payments.enums import PaymentStatus
-from users.models import User
-from payments.models import Subscription, Payment
+from payments.models import Subscription
+
 
 @shared_task
-def check_rent_due_date(self):
-    today_date = timezone.now().date() # get the current date
-    
-    # Check for rent due in 30 days
-    subscriptions = Subscription.objects.filter(next_payment_date = today_date + timedelta(days=30), status__in=[ PaymentStatus.PENDING, PaymentStatus.FAILED]) 
-   
-    #send email to the tenant
-    for subscription in subscriptions:
-        send_notification(
-        "Upcoming Rent Due Reminder"
-        f"Dear {subscription.customer.email},\n\nThis is a reminder that your rent for your unit is due soon on {subscription.next_payment_date}.\nPlease ensure timely payment to avoid late fees.\n\nThank you!"
-    )
+def check_rent_due_dates():
 
-
-
-    # check for rent due today
-    subscriptions = Subscription.objects.filter(next_payment_date = today_date, status__in=[ PaymentStatus.PENDING, PaymentStatus.FAILED])
-
-    #send email to the tenant
-    for subscription in subscriptions:
-        send_notification(
-        "Rent Due Reminder"
-        f"Dear {subscription.customer.email},\n\nThis is a reminder that your rent for your unit is due today.\nPlease ensure timely payment to avoid late fees.\n\nThank you!"
-    )
-
-    # check for rent due in 1 day
-    subscriptions = Subscription.objects.filter(next_payment_date = today_date + timedelta(days=1), status__in=[ PaymentStatus.PENDING, PaymentStatus.FAILED])
-
-    #send email to the tenant
-    for subscription in subscriptions:
-        send_notification(
-        "Rent Due Reminder"
-        f"Dear {subscription.customer.email},\n\nThis is a reminder that your rent for your unit is due tomorrow.\nPlease ensure timely payment to avoid late fees.\n\nThank you!"
-    )
+    def send_reminders(subscription, date_before_due, reminder_class):
+        subject = f"{reminder_class} Rent Due Reminder"
+        message = (f"Dear {subscription.customer.email},\n\n"
+        f"This is a reminder that your rent for your unit is due {reminder_class} on {subscription.next_payment_date}.\n"
+        f"Please ensure timely payment to avoid late fees.\n\nThank you!")
         
-    
-    # check for rent overdue
-    subscriptions = Subscription.objects.filter(next_payment_date__lt = today_date, status__in=[ PaymentStatus.PENDING, PaymentStatus.FAILED])
+        send_notification_for_rent_due(subscription.customer, subject, message)
+        
 
-    #send email to the tenant
+    # This is a dictionary that contains the days before the next payment date that we want to send reminders
+    interval = {
+        'monthly': [7, 0],
+        'quarterly': [30, 7, 0],
+        'biannually': [30, 7, 0],
+        'annually': [100, 30, 7,  0]
+    }
+
+    today_date = timezone.now().date() # get the current date
+
+
+    subscriptions = Subscription.objects.filter(status__in=[ PaymentStatus.PENDING, PaymentStatus.FAILED])
     for subscription in subscriptions:
-        send_notification(
-        "Rent Overdue Reminder"
-        f"Dear {subscription.customer.email},\n\nThis is a reminder that your rent for your unit is overdue.\nPlease ensure timely payment to avoid late fees.\n\nThank you!"
-    )
+        payment_intervals = subscription.plan.interval
+        if payment_intervals in interval:
+            for i in interval[payment_intervals]:
+                if subscription.next_payment_date == today_date + timedelta(days=i):
+                    if i > 0:
+                        send_reminders(subscription, i, 'Upcoming')
+                    else:
+                        send_reminders(subscription, i, 'Today')
 
+  
+
+
+
+# check the plan the tenants are subscribed to 
+# check the next payment date 
+# check the last payment date made by the tenant 
 
 

@@ -37,3 +37,5 @@ whitenoise
 
 
 celery[redis]  #this is an distributed task queue/job system to handle asynchronous tasks such as email sending. It is used in the notification application.
+weasyprint  #this is a visual rendering engine for HTML and CSS that can export to PDF. It is used in the report application.
+openpyxl  #this is a Python library to read/write Excel 2010 xlsx/xlsm/xltx/xltm files. It is used in the report application.
