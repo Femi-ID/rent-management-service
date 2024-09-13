@@ -1,15 +1,13 @@
-
-from . import views
 from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('houseList/', views.HouseListView.as_view(), name = "house-list"), 
+    path('create-house/', views.CreateHouse.as_view(), name='create-house'), 
     path('list-houses/<str:owner_id>/', views.ListHousesAndUnits.as_view(), name='list-house'),
+    path('houseList/', views.HouseListView.as_view(), name = "house-list"),
     path('houseDetails/<str:pk>', views.HouseDetailsView.as_view(), name = "houseDetails"), 
     path('delete/<str:pk>', views.DeleteHouseView.as_view(), name = "delete"), 
-    path('create-house/', views.CreateHouse.as_view(), name='create-house'),
     path('update/<str:pk>', views.HouseUpdateView.as_view(), name = "houseUpdate"),
-
      
     # path('register/unit', views.RegisterUnitView.as_view(), name="registerUnit"),
     path('register/<str:house_id>/', views.CreateHouseUnit.as_view(), name="registerUnit"),
