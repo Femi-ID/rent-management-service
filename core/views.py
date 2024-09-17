@@ -13,7 +13,7 @@ class CreateHouse(APIView):
         print(user)
         if user.is_authenticated and user.user_type == 'Landlord':
             try:
-                address = request.POST.get('address', False)
+                address = request.POST.get['address']
                 city = request.POST['city']
                 state = request.POST['state']
                 reg_license = request.POST['reg_license']
