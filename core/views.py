@@ -13,11 +13,11 @@ class CreateHouse(APIView):
         print(user)
         if user.is_authenticated and user.user_type == 'Landlord':
             try:
-                address = request.POST.get('address', False)
-                city = request.POST['city']
-                state = request.POST['state']
-                reg_license = request.POST['reg_license']
-                number_of_units = request.POST['number_of_units']
+                address = request.data.get('address', False)
+                city = request.data.get('city')
+                state = request.data.get('state')
+                reg_license = request.data.get('reg_license')
+                number_of_units = request.data.get('number_of_units')
                 
                 if not address or not city or not state or not reg_license:
                     return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
