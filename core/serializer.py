@@ -46,10 +46,11 @@ class HouseUnitSerializer(serializers.ModelSerializer):
 class LeaseAgreementSerializer(serializers.ModelSerializer):
     document = serializers.FileField()
     created_by = serializers.PrimaryKeyRelatedField(read_only=True)  
+    unit_number = serializers.SerializerMethodField()
 
     class Meta:
         model = LeaseAgreement
-        fields = ["document", 'created_by']
+        fields = ["document", 'created_by', 'unit_number']
     
     def create(self, validated_data):
         house_unit = self.context.get('house_unit')
@@ -58,6 +59,9 @@ class LeaseAgreementSerializer(serializers.ModelSerializer):
         validated_data['created_by'] = created_by
         lease = LeaseAgreement.objects.create(**validated_data)
         return lease 
+    
+    def get_unit_number(self, object):
+        return object.house_unit.unit_number
     
 
         

@@ -114,7 +114,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get('DATABASE_URL')
+# database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
 DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
@@ -238,7 +238,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 # EMAIL_PORT = config('EMAIL_PORT')
 # EMAIL_USE_TLS = config('EMAIL_USE_TLS')
-# # EMAIL_USE_SSL = config('EMAIL_USE_SSL')
+# EMAIL_USE_SSL = config('EMAIL_USE_SSL')
 # DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')

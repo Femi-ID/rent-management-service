@@ -1,7 +1,7 @@
 from django.core.mail import send_mail
 from users.models import User
 from core.models import HouseUnit
-from payments.models import Payment
+from payments.models import Payment, Subscription, PaymentPlan
 import os
 
 def send_notification_for_rent_due(user, subject, message):
@@ -12,23 +12,30 @@ def send_notification_for_rent_due(user, subject, message):
         [user.email],   
         fail_silently=False,
     )
-    # print('process.env.EMAIL_HOST_USER')
-    # print('Email sent successfully')
 
 
-def send_ticket_notification_to_tenant(unit_id):
-    unit = HouseUnit.objects.get(id=unit_id)
-    # get user details for unit from payment
-    tenant = Payment.objects.get(house_unit=unit_id).user
+def send_ticket_notification_to_tenant(unit_id, landlord_id):
+    try:
+        unit = HouseUnit.objects.get(id=unit_id, house__owner_id=landlord_id)
+    except HouseUnit.DoesNotExist:
+        print('This unit does not belong to this landlord')
+        return
+    
+    # Retrieve tenant information from payment
+    latest_payment_for_unit = Payment.objects.filter(house_unit_id=unit_id).order_by('-created_at').first()
 
-    # Send email to the tenant
-    send_mail(
-        f'Ticket {unit.pk} Status Updated',
-        f'The status of your ticket "{unit.subject}" has been updated to "open".',
-        os.getenv('EMAIL_HOST_USER'), # This is the sender email
-        [tenant.email],
-        fail_silently=False,
-    )
+    if latest_payment_for_unit is None:
+        print('No payment found for this unit') 
+        return
+    else:
+        # Send email to the tenant
+        send_mail(
+            f'Ticket {unit.pk} Status Updated',
+            f'The status of your ticket for {unit.unit_number} has been updated. Please login to your account to view the changes.',
+            os.getenv('EMAIL_HOST_USER'), # This is the sender email
+            [latest_payment_for_unit.email], # This is the receiver email
+            fail_silently=False,
+        )
     
 
 # send mail to landlord when a tenants makes a ticket
