@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import House, HouseUnit
+from users.models import OnboardUser
 
 
 class HouseSerializer(serializers.ModelSerializer):
@@ -9,7 +10,7 @@ class HouseSerializer(serializers.ModelSerializer):
     no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = House
-        fields = ['id', 'address', 'owner', 'name_of_owner', 'number_of_units', 'reg_license', 'no_of_house_units']
+        fields = ['id', 'address', 'owner', 'name_of_owner', 'city','state', 'number_of_units', 'reg_license', 'no_of_house_units']
 
     def get_name_of_owner(self, object):
         return object.owner.email
@@ -32,10 +33,20 @@ class HouseUnitSerializer(serializers.ModelSerializer):
     # no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = HouseUnit
-        fields = ['id', 'house', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner', 'no_of_house_units']
+        fields = ['id', 'house', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner']
 
     def get_name_of_owner(self, object):
-        return object.house.owner.email
+        return str(object.house.owner.email)
     
     # def get_no_of_house_units(self, object):
     #     return object.units[:]
+
+
+class OnboardUserSerializer(serializers.ModelSerializer):
+    # house_address = serializers.SerializerMethodField()
+    class Meta:
+        model = OnboardUser
+        fields = ['email', 'house_unit']
+
+    # def get_house_address(self, object):
+    #     return object.house.address

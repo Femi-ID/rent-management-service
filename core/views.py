@@ -1,10 +1,14 @@
+from tkinter import ON
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from core.models import HouseUnit, House
-from .serializer import HouseSerializer, HouseUnitSerializer
-
+from .serializer import HouseSerializer, HouseUnitSerializer, OnboardUserSerializer
+from users.models import OnboardUser as OnBoard
+from django.db.models import Prefetch
+import json
+from users.models import User
 
 class CreateHouse(APIView):
     """View to add/create houses. (Only Landlords are allowed to do so.)"""
@@ -84,5 +88,51 @@ class CreateHouseUnit(APIView):
         except Exception as e:
             return Response({'message': 'Your house details could not be added',
                              'error': {e}})
+
+from django.core.serializers import serialize
+class OnboardUser(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        house_units = HouseUnit.objects.select_related('house').filter(house__owner=request.user) 
+        available_units = house_units.filter(availability=True)
+        if house_units:
+            house_unit_serializer = HouseUnitSerializer(house_units, many=True)
+            return Response({'message':'The list of units owned by the current user',
+                            'house units': house_unit_serializer.data},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'message':'You have not added a house/house unit yet.'},
+                            status=status.HTTP_204_NO_CONTENT)
+
+    def post(self, request, house_unit_id):
+        email = request.data.get('email')
+        if User.objects.filter(email=email).first():
+            return Response({'message': "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            house_unit = HouseUnit.objects.filter(id=house_unit_id, house__owner=request.user, availability=True).first()
+            old_user = OnBoard.objects.filter(email=email)
+            print('house unit', house_unit)
+            print('old user', old_user)
+            if house_unit and not old_user:
+                serializer = OnboardUserSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    print('serial', serializer.data)
+                    return Response({'message': 'Phase 1 of user onboarding done.','data': serializer.data},
+                                    status=status.HTTP_201_CREATED)
+                return Response({'errors':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if not house_unit:
+                return Response({'message': 'House unit is currently unavailable.'}, status=status.HTTP_400_BAD_REQUEST)
+            elif old_user:
+                return Response({'message': "A user with this email has been previously on-boarded."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        except HouseUnit.DoesNotExist:
+            return Response({'message': "House unit does not exist."},status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+                return Response({"status": 500,
+                                 "success": False,
+                                 "message": e},
+                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 

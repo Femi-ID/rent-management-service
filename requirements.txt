@@ -7,6 +7,7 @@ defusedxml
 dj-database-url
 Django
 django-cors-headers
+django-debug-toolbar
 django-rest-swagger
 django-taggit
 django-templated-mail
@@ -25,6 +26,8 @@ PyJWT
 python-decouple
 python-dotenv
 python3-openid
+redis
+reportlab
 requests
 requests-oauthlib
 social-auth-app-django
