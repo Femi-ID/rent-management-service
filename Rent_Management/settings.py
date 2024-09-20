@@ -11,12 +11,14 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from datetime import timedelta
+from datetime import datetime, timedelta
 import dj_database_url
 from decouple import config
 import os
-# from dotenv import load_dotenv
-# load_dotenv()
+from celery.schedules import crontab
+
+# # from dotenv import load_dotenv
+# # load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,6 +58,7 @@ INSTALLED_APPS = [
     'accounts', 
     'payments',
     'wallets',
+    'notifications',
     'core',
     'tickets', 
 
@@ -116,7 +119,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get('DATABASE_URL')
+# database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
 DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
@@ -280,3 +283,22 @@ CACHES = {
     #     "LOCATION": "127.0.0.1:11211", # Memcached is running on localhost (127.0.0.1) port 11211
     # }
 }
+# Celery configuration
+# use a managed redis service when deploying to production
+# make sure to install redis locally for development
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') 
+# CELERY_BROKER_URL = config('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json'] 
+CELERY_TASK_SERIALIZER = 'json' 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'check-rent-due-dates-daily': {
+        'task': 'notifications.tasks.check_rent_due_dates',
+        'schedule': crontab(minute=0, hour=0)
+    },
+} 
+

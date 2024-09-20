@@ -8,3 +8,8 @@ backup.json
 /__pycache__/**
 payments/redis-doc.txt
 payments/utils.py
+
+ticekts/migrations
+notifications/migrations
+
+files
