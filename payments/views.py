@@ -1,16 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
+
+from core import serializer
 # from symbol import decorator
-from .models import Payment, PaymentPlan, Subscription
+from .models import Payment, PaymentPlan, Subscription, PaymentReceipt
 from users.models import User
 from rest_framework.response import Response
-from rest_framework import status
-import requests, json
+from rest_framework import status, permissions
+import requests, json, redis
 from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
-from .serializers import PaymentSerializer
+from .serializers import PaymentSerializer, PaymentReceiptSerializer
 from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -19,6 +21,7 @@ def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
     return house_unit
 
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 class AcceptPayment(APIView):
     @swagger_auto_schema(
@@ -112,8 +115,10 @@ class VerifyPayment(APIView):
                 return Response({"error": "Reference must be passed as a query parameter in the url."},
                                 status=status.HTTP_400_BAD_REQUEST)
             verify_transaction = paystack.verify_payment(ref=ref)
+            if verify_transaction['response_data']['status'] == False:
+                return Response({'response data': verify_transaction},
+                                status=status.HTTP_400_BAD_REQUEST)
             transaction_status = verify_transaction['response_data']['data']['status']
-            print(ref)
             print('transaction status >>>', transaction_status)
             print('verify transaction >>>',verify_transaction)
             
@@ -122,6 +127,9 @@ class VerifyPayment(APIView):
             print('rent price >>>',house_unit.rent_price)
             payment = Payment.objects.get(reference=ref)
             print('payment::::', payment)
+
+            # store the paystack response in redis cache
+            redis_client.set(f'paystack_response_{ref}', json.dumps(verify_transaction['response_data']))
 
             if house_unit:
                 # try:
@@ -141,27 +149,36 @@ class VerifyPayment(APIView):
                                                     'verify_transaction':verify_transaction,
                                                     'payment_obj': payment_serializer.data},
                                                     status=status.HTTP_200_OK)
-                            case 'failed':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
-                                payment.save()
-                                return Response({"message": "Payment failed. Please try again.",
-                                                    'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_400_BAD_REQUEST)
-                            case 'abandoned':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                            case 'pending':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
                                 payment.save()
                                 return Response({"message": "Payment abandoned. Transaction not completed.",
                                                     'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_100_CONTINUE)
+                                                    status=status.HTTP_HTTP_200_OK)
+                            case 'failed':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
+                                payment.save()
+                                return Response({"message": "Payment failed. Please try again.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_200_OK)
+                            case 'abandoned':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
+                                print('transaction_id::', payment.transaction_id)
+                                print('customer_code:::', payment.customer_code) 
+                                payment.save()
+                                return Response({"message": "Payment abandoned. Transaction not completed.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_200_OK)
                             case 'reversed':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
                                 payment.save()
                                 return Response({"message": "Payment was reversed.",
                                                     'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_100_CONTINUE)
+                                                    status=status.HTTP_HTTP_200_OK)
                             case _:
                                 return Response({"message": "Unable to verify payment.",
                                                     'verify_transaction':verify_transaction},
@@ -177,6 +194,9 @@ class VerifyPayment(APIView):
                 #         "success": False,
                 #         "message": f'Your payment was not processed: {e}'
                 #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # generate receipt for the transaction
+
                 
             
 class CreatePlan(APIView):
@@ -206,7 +226,7 @@ class CreatePlan(APIView):
         if request.user.is_authenticated and request.user.user_type == 'Landlord':
             user = request.user
             name = request.data.get('name')
-            interval = request.data.get('interval')
+            interval = request.data.get('interval') 
             amount = request.data.get('amount')
             amount_int = int(amount)*100
             # print('amount >>', type(amount))
@@ -300,7 +320,7 @@ class CreateSubscription(APIView):
         }
     )
     def post(self, request, plan_id):
-        """Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
+        """Endpoint to create subscription for an available plan. The tenant subscribes to a plan they can afford."""
         if request.user.is_authenticated:   
             customer_email = request.user.email
             plan = get_plan(plan_id)
@@ -333,4 +353,20 @@ class CreateSubscription(APIView):
                                 'create_sub':create_sub},
                                 status=status.HTTP_400_BAD_REQUEST
                                 )
+
+
+class PaymentHistory(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        payment_history = PaymentReceipt.objects.filter(customer=request.user)
+        if payment_history:
+            serialized_payment_history = PaymentReceiptSerializer(payment_history, many=True)
+            return Response({'message': f"Payment history for {user.email}....",
+                             "payment_history": serialized_payment_history.data},
+                             status=status.HTTP_200_OK)
+        elif not payment_history:
+            return Response({'message': "No payment history exists."},
+                             status=status.HTTP_204_NO_CONTENT)
+
 

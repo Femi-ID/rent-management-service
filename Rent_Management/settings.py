@@ -17,8 +17,8 @@ from decouple import config
 import os
 from celery.schedules import crontab
 
-# from dotenv import load_dotenv
-# load_dotenv()
+# # from dotenv import load_dotenv
+# # load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +38,9 @@ DEBUG = os.environ.get('DEBUG')
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
 # ALLOWED_HOSTS = ['*']
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 # Application definition
 
@@ -65,11 +68,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_swagger',   # Swagger
     'drf_yasg',    # Another Swagger generator
+    # 'debug_toolbar',
 ]
 
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     # corsheaders middleware
     "corsheaders.middleware.CorsMiddleware",
 
@@ -247,6 +252,37 @@ PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 # PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 # PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
 
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+       'LOGIN_URL': 'http://127.0.0.1:8000/auth/jwt/create/',     # URL for login, e.g. /login/
+    #    'LOGOUT_URL': 'your-logout-url',   # URL for logout, e.g. /logout/
+       'USE_SESSION_AUTH': True,          # Use session authentication (Django Login)
+      'Basic': {
+            'type': 'oauth2'
+      },
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      },
+      'DJANGO_LOGIN': ''
+   }
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "TIMEOUT": 604800,
+        # "OPTIONS": {"MAX_ENTRIES": 500}
+    }
+    # "default": {
+    #     "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache", # Memcached binding
+    #     "LOCATION": "127.0.0.1:11211", # Memcached is running on localhost (127.0.0.1) port 11211
+    # }
+}
 # Celery configuration
 # use a managed redis service when deploying to production
 # make sure to install redis locally for development

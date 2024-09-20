@@ -24,6 +24,9 @@ from drf_yasg import openapi
 from rest_framework import permissions
 from django.conf import settings
 
+# debug toolbar imports
+# import debug_toolbar
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -48,4 +51,6 @@ urlpatterns = [
 
     # swagger route for documentation
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    # debug toolbar
+    # path('__debug__/', include(debug_toolbar.urls)),
 ]

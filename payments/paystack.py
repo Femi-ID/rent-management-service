@@ -38,13 +38,12 @@ class PayStack:
 
         response = requests.get(url=url, headers=self.headers)
         response_data = response.json()
-        print('response_data: ', response_data)
 
-        if response_data['data']['status'] == 'success':
-            # also confirm the amount response['amount'] == house_unit.rent_price
-            return {'response_data': response_data}
+        # if response_data['data']['status'] == 'success':
+        #     # also confirm the amount response['amount'] == house_unit.rent_price
+        #     return {'response_data': response_data}
         
-        print('response_data: ', response_data)
+        # print('response_data: ', response_data)
         return {'response_data': response_data}
 
 
@@ -85,6 +84,18 @@ class PayStack:
         return {'status': response.status_code,
                 "message": "Subscription created successfully.", 
                 'response_data': response_data}
+    
+
+    def create_recipient(self, recipient_type, name, account_number, bank_code):
+        url = "https://api.paystack.co/transferrecipient"
+        payload ={
+            "recipient_type": recipient_type,
+            "name": name,
+            "account_number": account_number,
+            "bank_code": bank_code
+        }
+
+        response = requests.post(url, headers=self.headers, data=payload)
 
 
 paystack = PayStack()

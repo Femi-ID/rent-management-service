@@ -1,11 +1,15 @@
+from tkinter import ON
 from rest_framework.views import APIView
 from rest_framework import permissions
 from .models import House, HouseUnit, LeaseAgreement
 from .serializer import HouseSerializer, HouseUnitSerializer, LeaseAgreementSerializer
 from rest_framework.response import Response 
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-
+from rest_framework import status, permissions
+from django.shortcuts import get_object_or_404, OnboardUserSerializer
+from users.models import OnboardUser as OnBoard
+from django.db.models import Prefetch
+import json
+from users.models import User
 
 # create a House  
 class CreateHouse(APIView):
@@ -14,20 +18,12 @@ class CreateHouse(APIView):
         user = request.user
         print(user)
         if user.is_authenticated and user.user_type == 'Landlord':
-
-            existing_house = House.objects.filter(reg_license=request.data['reg_license']).exists()
-            if existing_house:
-                return Response({
-                    'msg': 'House with specified details already exists',
-                    'isSuccess': False
-                }, status=400)
-
             try:
-                address = request.data['address']
-                city = request.data['city']
-                state = request.data['state']
-                reg_license = request.data['reg_license']
-                number_of_units = request.data['number_of_units']
+                address = request.data.get('address', False)
+                city = request.data.get('city')
+                state = request.data.get('state')
+                reg_license = request.data.get('reg_license')
+                number_of_units = request.data.get('number_of_units')
                 
                 if not address or not city or not state or not reg_license:
                     return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
@@ -200,6 +196,51 @@ class ListUnitsUnderHouse(APIView):
             return Response({'message': 'Authentication required to view house details'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
+from django.core.serializers import serialize
+class OnboardUser(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        house_units = HouseUnit.objects.select_related('house').filter(house__owner=request.user) 
+        available_units = house_units.filter(availability=True)
+        if house_units:
+            house_unit_serializer = HouseUnitSerializer(house_units, many=True)
+            return Response({'message':'The list of units owned by the current user',
+                            'house units': house_unit_serializer.data},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'message':'You have not added a house/house unit yet.'},
+                            status=status.HTTP_204_NO_CONTENT)
+
+    def post(self, request, house_unit_id):
+        email = request.data.get('email')
+        if User.objects.filter(email=email).first():
+            return Response({'message': "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            house_unit = HouseUnit.objects.filter(id=house_unit_id, house__owner=request.user, availability=True).first()
+            old_user = OnBoard.objects.filter(email=email)
+            print('house unit', house_unit)
+            print('old user', old_user)
+            if house_unit and not old_user:
+                serializer = OnboardUserSerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    print('serial', serializer.data)
+                    return Response({'message': 'Phase 1 of user onboarding done.','data': serializer.data},
+                                    status=status.HTTP_201_CREATED)
+                return Response({'errors':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if not house_unit:
+                return Response({'message': 'House unit is currently unavailable.'}, status=status.HTTP_400_BAD_REQUEST)
+            elif old_user:
+                return Response({'message': "A user with this email has been previously on-boarded."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        except HouseUnit.DoesNotExist:
+            return Response({'message': "House unit does not exist."},status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+                return Response({"status": 500,
+                                 "success": False,
+                                 "message": e},
+                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 
 class LeaseAgreementView(APIView):
@@ -269,4 +310,3 @@ class ListAgreementsUnderHouse(APIView):
         else:
             return Response({'message': 'Authentication required to view house details'},
                             status=status.HTTP_401_UNAUTHORIZED)
-    
