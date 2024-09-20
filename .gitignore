@@ -6,3 +6,5 @@ __pycache__
 .venv
 backup.json
 /__pycache__/**
+payments/redis-doc.txt
+payments/utils.py

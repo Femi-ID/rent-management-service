@@ -4,6 +4,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from .enums import UserType
 import uuid
+from core.models import HouseUnit
 
 
 class CustomUserManager(BaseUserManager):
@@ -81,9 +82,17 @@ class User(AbstractUser, PermissionsMixin):
     def __str__(self):
         return f"Username: {self.username} >> UserType: {self.user_type} >> email: {self.email}"
 
-# class LeaseAgreement(models.Model):
-#     house = models.ForeignKey(User, related_name='lease_agreement', on_delete=models.DO_NOTHING, limit_choices_to={'user_type': 'LANDLORD'})
-#     document = models.FileField()
+
+class OnboardUser(models.Model):
+    email = models.EmailField(max_length=250, unique=True)
+    house_unit = models.OneToOneField(HouseUnit, related_name='onboard_tenant', on_delete=models.DO_NOTHING)
+    
+    objects = models.Manager()
+
+    class Meta:
+        ordering = ['house_unit']
+
+    def __str__(self):
+        return f"{self.email} - {self.house_unit}"
 
 
-# User.add_to_class
