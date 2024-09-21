@@ -90,7 +90,7 @@ class OnboardUser(models.Model):
     objects = models.Manager()
 
     class Meta:
-        ordering = ['house_unit']
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.email} - {self.house_unit}"

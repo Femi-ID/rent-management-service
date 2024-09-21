@@ -1,11 +1,10 @@
 from rest_framework import serializers
 from .models import House, HouseUnit
 from users.models import OnboardUser
-
+import json
 
 class HouseSerializer(serializers.ModelSerializer):
     name_of_owner = serializers.SerializerMethodField()
-    # TODO: read up how to implement nested modelSerializers
     # house_unit_details = serializers.SerializerMethodField()
     no_of_house_units = serializers.SerializerMethodField()
     class Meta:
@@ -23,7 +22,9 @@ class HouseSerializer(serializers.ModelSerializer):
     #     lists = []
     #     for unit in house_units:
     #         lists.append(unit)
-    #         return lists
+    #     json_object = json.dumps(lists, indent=4)
+    #     json_obj = json.loads(json_object)
+    #     return json_obj
     
     
 
