@@ -14,7 +14,7 @@ def add_new_user_house_unit(sender, instance, created, *args, **kwargs):
     if created:
         # print('instance >>', instance)
         registered_onboarded_user = OnboardUser.objects.filter(email=instance.email).first()
-        print('reggg', registered_onboarded_user)
+        print('registered user', registered_onboarded_user)
         if registered_onboarded_user:
             house_unit = HouseUnit.objects.filter(id=registered_onboarded_user.house_unit.id).first()
             house_unit.occupant = instance
