@@ -8,6 +8,6 @@ urlpatterns = [
     path('list-house-units/<str:owner_id>/<str:house_id>/', views.ListHouseUnits.as_view(), name='list-house'),
 
     path('onboard-user/', views.OnboardUser.as_view(), name='onboard-user'),
-    path('onboard-user/<int:house_unit_id>/', views.OnboardUser.as_view(), name='onboard-user'),  
+    # path('onboard-user/<int:house_unit_id>/', views.OnboardUser.as_view(), name='onboard-user'),  
     path('tenant-dashboard/', views.TenantDashboard.as_view(), name='tenant-dashboard'), 
 ]

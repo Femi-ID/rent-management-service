@@ -7,33 +7,37 @@ from rest_framework import status, permissions
 from core.models import HouseUnit, House
 from .serializer import HouseSerializer, HouseUnitSerializer, OnboardUserSerializer
 from users.models import OnboardUser as OnBoard
-from django.db.models import Prefetch
 import json
 from users.models import User
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 
 class CreateHouse(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="Add a house to the application. POST /houses/create-house/",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['address', 'city', 'state', 'reg_license'],
+            properties={
+                'address': openapi.Schema(type=openapi.TYPE_STRING, description='Address of the house.'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, description='City of the house location.'),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.'),
+                'reg_license': openapi.Schema(type=openapi.TYPE_STRING, description='Registration license of the house.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="House created"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def post(self, request):
         """View to add/create houses. (Only Landlords are allowed to do so.)"""
         user = request.user
         if user.user_type == 'Landlord':
             try:
-                # address = request.data.get('address', False)
-                # city = request.data.get('city')
-                # state = request.data.get('state')
-                # reg_license = request.data.get('reg_license')
-                # number_of_units = request.data.get('number_of_units')
-                
-                # if not address or not city or not state or not reg_license:
-                #     return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
-                #                     status=status.HTTP_400_BAD_REQUEST)
-                # house = House.objects.create(owner=user, address=address, city=city,
-                #                             state=state, reg_license=reg_license,
-                #                             number_of_units=number_of_units)
-                # serializer = HouseSerializer(house)
-                # print(house)
-                # use serializers ??
-                serializer = HouseSerializer(data=request.data)
+                serializer = HouseSerializer(data=request.data, owner=request.user)
                 if serializer.is_valid():
                     serializer.save()
                     return Response({'message': 'New house created.','data': serializer.data},status=status.HTTP_201_CREATED)
@@ -42,11 +46,29 @@ class CreateHouse(APIView):
                 return Response({'message': 'Your house details could not be added',
                                  'error': f'{e}'}, 
                                  status=status.HTTP_501_NOT_IMPLEMENTED)
+        return Response({'message':'Only landlords can create houses.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class ListHouses(APIView):
     permission_classes = [permissions.IsAuthenticated]
     """View to list the house and number of house_units belonging to the landlord."""
+    @swagger_auto_schema(
+        operation_description="Lists the houses belonging to the current user(Landlord). GET /houses/list-houses/<str:owner_id>/",
+        manual_parameters=[
+            openapi.Parameter(
+                'owner_id',
+                openapi.IN_PATH,
+                description="The ID of the current user",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(description="Returned list of houses you added."),
+            204: openapi.Response(description="You currently haven't added any house."),
+            401: openapi.Response(description="Only landlords can access this view."),
+        }
+    )
     def get(self, request, owner_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -64,6 +86,30 @@ class ListHouses(APIView):
 class ListHouseUnits(APIView):
     permission_classes = [permissions.IsAuthenticated]
     """View to list the house and number of house_units belonging to the landlord."""
+    @swagger_auto_schema(
+        operation_description="Lists the house units belonging to the current user(Landlord). GET /houses/list-houses/<str:owner_id>/",
+        manual_parameters=[
+            openapi.Parameter(
+                'owner_id',
+                openapi.IN_PATH,
+                description="The ID of the current user",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                'house_id',
+                openapi.IN_PATH,
+                description="The ID of the house",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(description="Returned list of houses you added."),
+            204: openapi.Response(description="No units for this house."),
+            401: openapi.Response(description="Only landlords can access this view."),
+        }
+    )
     def get(self, request, owner_id, house_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -80,6 +126,24 @@ class ListHouseUnits(APIView):
 
 class CreateHouseUnit(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    @swagger_auto_schema(
+            operation_description="Create house units for a house. The current user(Landlord). GET /houses/list-houses/<str:owner_id>/",
+            manual_parameters=[
+                openapi.Parameter(
+                    'house_id',
+                    openapi.IN_PATH,
+                    description="The ID of the house",
+                    type=openapi.TYPE_STRING,
+                    required=True
+                )
+            ],
+            responses={
+                200: openapi.Response(description="Returned list of houses you added."),
+                204: openapi.Response(description="No units for this house."),
+                401: openapi.Response(description="Bad request, check that the data you sent is of the correct type and complete."),
+                401: openapi.Response(description="You are not authorized to create a unit for this house."),
+            }
+        )
     def post(self, request, house_id):
         """View to create house unit for a house. Only the house owner (landlord) can create units."""
         try:
@@ -120,12 +184,42 @@ class OnboardUser(APIView):
             return Response({'message':'You have not added a house/house unit yet.'},
                             status=status.HTTP_204_NO_CONTENT)
 
-    def post(self, request, house_unit_id):
+    @swagger_auto_schema(
+            operation_description="This view displays the list of units owned by the current user and their respective houses).",
+            manual_parameters=[
+                openapi.Parameter(
+                'house_unit_id',
+                openapi.IN_QUERY,
+                description="The ID of the house unit.",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            )
+            ],
+            request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='Email of the new user to be onboarded.'),
+            },
+        ),
+            responses={
+                201: openapi.Response(description="Phase 1 of user onboarding done.."),
+                400: openapi.Response(description="Bad request."),
+                401: openapi.Response(description="You are not authorized to create a unit for this house."),
+                500: openapi.Response(description="Internal server error.")
+            }
+        )
+    def post(self, request):
         """On board a new user to a house unit."""
         email = request.data.get('email')
         if User.objects.filter(email=email).first():
             return Response({'message': "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
         try:
+            house_unit_id = request.GET.get('house_unit_id')
+            print('unit id', house_unit_id)
+            if not house_unit_id:
+                return Response({"error": "The house house unit must be passed as a query parameter in the url."},
+                                status=status.HTTP_400_BAD_REQUEST)
             house_unit = HouseUnit.objects.filter(id=house_unit_id, house__owner=request.user, availability=True).first()
             old_user = OnBoard.objects.filter(email=email)
             print('house unit', house_unit)
@@ -153,6 +247,7 @@ class OnboardUser(APIView):
 
 
 class TenantDashboard(APIView):
+    """This view displays the user's current house-unit information. ONLY FOR TENANTS."""
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         """The tenant's mobile view."""

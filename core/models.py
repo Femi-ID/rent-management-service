@@ -13,6 +13,7 @@ class House(models.Model):
     reg_license = models.CharField(max_length=100, blank=False)
     # image = models.ImageField()
     number_of_units = models.PositiveIntegerField()
+    # number_of_units = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license}'
