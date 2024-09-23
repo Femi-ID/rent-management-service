@@ -1,5 +1,5 @@
 import stat
-from tkinter import ON
+from tkinter import ON, W
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,11 +7,19 @@ from rest_framework import status, permissions
 from core.models import HouseUnit, House
 from .serializer import HouseSerializer, HouseUnitSerializer, OnboardUserSerializer
 from users.models import OnboardUser as OnBoard
-import json
+import json, redis
 from users.models import User
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from datetime import timedelta
+from django.conf import settings
 
+
+# redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(
+  host=settings.REDIS_CLIENT_HOST,
+  port=settings.REDIS_PORT,
+  password=settings.REDIS_PASSWORD)
 
 class CreateHouse(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -72,14 +80,21 @@ class ListHouses(APIView):
     def get(self, request, owner_id):
         user = request.user
         if user.user_type == 'Landlord':
-            houses = House.objects.filter(owner=owner_id).prefetch_related('units')
-            #TODO: Cache this result
-            if not houses:
-                return Response({'message':"You currently haven't added any house."},
-                                status=status.HTTP_204_NO_CONTENT)
+            houses = redis_client.get(f'house-list-{user.id}')
+            if houses is None:
+                houses = House.objects.filter(owner=owner_id).prefetch_related('units')
+                if not houses:
+                    return Response({'message':"You currently haven't added any house."}, status=status.HTTP_204_NO_CONTENT)
             
-            serializer = HouseSerializer(houses, many=True)
-            return Response({'message': 'The list of houses you added:','house details': serializer.data},status=status.HTTP_200_OK)
+                serializer = HouseSerializer(houses, many=True)
+                redis_client.set(f'house-list-{user.id}', json.dumps(serializer.data))
+                redis_client.expire(f'house-list-{user.id}', timedelta(hours=2))
+                print("data loaded from DB")
+                return Response({'message': 'The list of houses you added:','house details': serializer.data},status=status.HTTP_200_OK)
+            else:
+                json_houses = json.loads(houses)
+                print("data loaded from redis cache")
+                return Response({'message': 'The list of houses from redis cache:','house details': json_houses},status=status.HTTP_200_OK)
         return Response({'message':"Only landlords can access this view."},status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -113,14 +128,23 @@ class ListHouseUnits(APIView):
     def get(self, request, owner_id, house_id):
         user = request.user
         if user.user_type == 'Landlord':
-            house_units = HouseUnit.objects.filter(house__id=house_id, house__owner=owner_id).all()
-            if house_units:
-                serializer = HouseUnitSerializer(house_units, many=True)
-                return Response({'message':'The list of units owned by the current user',
-                                 'house units': serializer.data},
-                                 status=status.HTTP_200_OK)
+            house_units = redis_client.get(f'house-units-{user.id}')
+            if not house_units:
+                house_units = HouseUnit.objects.filter(house__id=house_id, house__owner=owner_id).all()
+                if house_units:
+                    serializer = HouseUnitSerializer(house_units, many=True)
+                    redis_client.set(f'house-units-{user.id}', json.dumps(serializer.data))
+                    redis_client.expire(f'house-units-{user.id}', timedelta(hours=2))
+                    print("data loaded from DB")
+                    return Response({'message':'The list of units owned by the current user',
+                                    'house units': serializer.data},
+                                    status=status.HTTP_200_OK)
+                else:
+                    return Response({'message':"No units for this house."},status=status.HTTP_204_NO_CONTENT)
             else:
-                return Response({'message':"No units for this house."},status=status.HTTP_204_NO_CONTENT)
+                json_house_units = json.loads(house_units)
+                print("data loaded from redis cache")
+                return Response({'message': 'List of house-units from redis cache:','house details': json_house_units},status=status.HTTP_200_OK)
         return Response({'message':"Only landlords can access this view."},status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -181,19 +205,31 @@ class OnboardUser(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         """This view displays the list of units owned by the current user and their respective houses"""
-        house_units = HouseUnit.objects.select_related('house').filter(house__owner=request.user) 
-        available_units = house_units.filter(availability=True)
-        print('available units', available_units)
-        if house_units:
-            house_unit_serializer = HouseUnitSerializer(house_units, many=True)
-            available_units_serializer = HouseUnitSerializer(available_units, many=True)
-            return Response({'message':'The list of units owned by the current user',
-                            'house units': house_unit_serializer.data,
-                            'available units': available_units_serializer.data},
-                            status=status.HTTP_200_OK)
+        user = request.user
+        available_units = redis_client.get(f'available-units-{user.id}')
+        if not available_units:
+            available_units = HouseUnit.objects.select_related('house').filter(availability=True, house__owner=request.user) 
+            # available_units = house_units.filter(availability=True)
+            if available_units:
+                available_units_serializer = HouseUnitSerializer(available_units, many=True)
+                redis_client.set(f'available-units-{user.id}', json.dumps(available_units_serializer.data))
+                redis_client.expire(f'available-units-{user.id}', timedelta(hours=2))
+
+                # available_units_serializer = HouseUnitSerializer(available_units, many=True)
+                return Response({'message':'The list of units currently AVAILABLE by the user (landlord)',
+                                'available house units': available_units_serializer.data},
+                                status=status.HTTP_200_OK)
+            elif available_units is None:
+                return Response({'message':'No available house unit currently.'},
+                                status=status.HTTP_204_NO_CONTENT)
+            elif not available_units:
+                return Response({'message':'You have not added a house/house unit yet.'},
+                                status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response({'message':'You have not added a house/house unit yet.'},
-                            status=status.HTTP_204_NO_CONTENT)
+            json_house_units = json.loads(available_units)
+            print("data loaded from redis cache")
+            return Response({'message': 'List of house-units from redis cache:','house details': json_house_units},status=status.HTTP_200_OK)
+
 
     @swagger_auto_schema(
             operation_description="This view displays the list of units owned by the current user and their respective houses).",
@@ -253,7 +289,7 @@ class OnboardUser(APIView):
         except Exception as e:
                 return Response({"status": 500,
                                  "success": False,
-                                 "message": e},
+                                 "message": f'{e}'},
                                  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -261,15 +297,25 @@ class TenantDashboard(APIView):
     """This view displays the user's current house-unit information. ONLY FOR TENANTS."""
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
+        user = request.user
         """The tenant's mobile view."""
-        house_units = HouseUnit.objects.filter(occupant=request.user).select_related('house__owner')
-        if house_units:
-            serializer = HouseUnitSerializer(house_units, many=True)
-            return Response({'message': 'The house unit the current user is renting.','data': serializer.data},
-                             status=status.HTTP_200_OK)
-        if request.user.user_type == 'Landlord':
-            return Response({'message': 'The current user is a LANDLORD'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'The current user is not yet a tenant'}, status=status.HTTP_204_NO_CONTENT)
+        rented_units = redis_client.get(f'rented-units-{user.id}')
+        if not rented_units:
+            rented_units = HouseUnit.objects.filter(occupant=request.user).select_related('house__owner')
+            if rented_units:
+                serializer = HouseUnitSerializer(rented_units, many=True)
+                redis_client.set(f'rented-units-{user.id}', json.dumps(serializer.data))
+                redis_client.expire(f'rented-units-{user.id}', timedelta(days=3))
+                return Response({'message': 'The house unit the current user is renting.','data': serializer.data},
+                                status=status.HTTP_200_OK)
+            if request.user.user_type == 'Landlord':
+                return Response({'message': 'The current user is a LANDLORD'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'message': 'The current user is not yet a tenant'}, status=status.HTTP_204_NO_CONTENT)
+        json_house_units = json.loads(rented_units)
+        print("data loaded from redis cache")
+        return Response({'message': 'List of rented-units from redis cache:','house details': json_house_units},status=status.HTTP_200_OK)
+        
         
 
 
