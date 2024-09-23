@@ -5,6 +5,7 @@ import redis, json
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
+from django.conf import settings
 
 # pdf imports
 from django.http import FileResponse
@@ -16,7 +17,11 @@ from django.core.mail import EmailMessage
 from .create_receipt import send_email_with_pdf_image_attachment
 
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+# redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(
+  host=settings.REDIS_CLIENT_HOST,
+  port=settings.REDIS_PORT,
+  password=settings.REDIS_PASSWORD)
 
 def get_payment_receipt(receipt_reference):
     try:

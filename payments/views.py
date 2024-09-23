@@ -16,12 +16,17 @@ from .serializers import PaymentSerializer, PaymentReceiptSerializer
 from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from datetime import timedelta
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
     return house_unit
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+# redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(
+  host=settings.REDIS_CLIENT_HOST,
+  port=settings.REDIS_PORT,
+  password=settings.REDIS_PASSWORD)
 
 class AcceptPayment(APIView):
     @swagger_auto_schema(
@@ -130,6 +135,7 @@ class VerifyPayment(APIView):
 
             # store the paystack response in redis cache
             redis_client.set(f'paystack_response_{ref}', json.dumps(verify_transaction['response_data']))
+            redis_client.expire(f'paystack_response_{ref}', timedelta(minutes=5))
 
             if house_unit:
                 # try:

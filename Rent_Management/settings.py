@@ -280,3 +280,12 @@ CACHES = {
     #     "LOCATION": "127.0.0.1:11211", # Memcached is running on localhost (127.0.0.1) port 11211
     # }
 }
+
+REDIS_CLIENT_HOST = os.environ.get('REDIS_CLIENT_HOST')
+REDIS_PORT = os.environ.get('REDIS_PORT')
+REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
+
+
+# REDIS_CLIENT_HOST = config('REDIS_CLIENT_HOST')
+# REDIS_PORT = config('REDIS_PORT')
+# REDIS_PASSWORD = config('REDIS_PASSWORD')
