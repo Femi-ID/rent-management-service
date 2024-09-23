@@ -137,10 +137,21 @@ class CreateHouseUnit(APIView):
                     required=True
                 )
             ],
+            request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['house', 'unit_number', 'unit_type', 'rent_price', 'availability'],
+            properties={
+                'house': openapi.Schema(type=openapi.TYPE_STRING, description='House ID.'),
+                'unit_number': openapi.Schema(type=openapi.TYPE_STRING, description='This is self-descriptive.'),
+                'unit_type': openapi.Schema(type=openapi.TYPE_STRING, description='Example: flat, duplex, self-contain....'),
+                'rent_price': openapi.Schema(type=openapi.TYPE_INTEGER, description='Amount for the rent.'),
+                'availability': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Boolean:: True/False.'),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.')
+            }
+            ),
             responses={
-                200: openapi.Response(description="Returned list of houses you added."),
-                204: openapi.Response(description="No units for this house."),
-                401: openapi.Response(description="Bad request, check that the data you sent is of the correct type and complete."),
+                201: openapi.Response(description="Your house units details has been added."),
+                400: openapi.Response(description="Bad request, check that the data you sent is of the correct type and complete."),
                 401: openapi.Response(description="You are not authorized to create a unit for this house."),
             }
         )
