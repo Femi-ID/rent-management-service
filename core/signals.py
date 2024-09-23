@@ -15,6 +15,7 @@ def create_email_for_onboarded_user(sender, instance, created, *args, **kwargs):
         print('email***', instance.email)
         print('instance >>', instance.house_unit)
         print('sending mail to onboarded user')
+        print('sender email', settings.EMAIL_HOST_USER)
         email = EmailMessage(
             subject = 'RENT-PADII ONBOARDING PHASE ',
             body = f'''\t\tGood day, your ONBOARDING PHASE process has begun.

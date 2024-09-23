@@ -9,13 +9,23 @@ class HouseSerializer(serializers.ModelSerializer):
     no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = House
-        fields = ['id', 'address', 'owner', 'name_of_owner', 'city','state', 'number_of_units', 'reg_license', 'no_of_house_units']
+        fields = ['id', 'address', 'name_of_owner', 'city','state', 'number_of_units', 'reg_license', 'no_of_house_units']
 
     def get_name_of_owner(self, object):
         return object.owner.email
 
     def get_no_of_house_units(self, object):
         return object.units.count()
+    
+    def __init__(self, *args, **kwargs):
+        # Extract the additional 'owner' argument
+        self.owner = kwargs.pop('owner', None)
+        super().__init__(*args, **kwargs)
+
+    def create(self, validated_data):
+        # Ensure the owner is set when creating the house
+        validated_data['owner'] = self.owner
+        return super().create(validated_data)
 
     # def get_house_unit_details(self, object):
     #     house_units = object.units

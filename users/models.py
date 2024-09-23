@@ -87,12 +87,12 @@ class OnboardUser(models.Model):
     email = models.EmailField(max_length=250, unique=True)
     house_unit = models.OneToOneField(HouseUnit, related_name='onboard_tenant', on_delete=models.DO_NOTHING)
     
-    objects = models.Manager()
+    # objects = models.Manager()
 
-    class Meta:
-        ordering = ['id']
+    # class Meta:
+    #     ordering = ['id']
 
-    def __str__(self):
-        return f"{self.email} - {self.house_unit}"
+    # def __str__(self):
+    #     return f"{self.email} - {self.house_unit}"
 
 
