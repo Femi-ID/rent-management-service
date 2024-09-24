@@ -1,18 +1,20 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView
+
+from core import serializer
+# from symbol import decorator
 from rest_framework.generics import GenericAPIView
 from tickets.models import Ticket
-from .models import Payment, PaymentPlan, Subscription
+from .models import Payment, PaymentPlan, Subscription, PaymentReceipt
 from users.models import User
 from rest_framework.response import Response
-from rest_framework import status
-import requests, json
+from rest_framework import status, permissions
+import requests, json, redis
 from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import House, HouseUnit
-from .serializers import LandlordDashboardSerializer, PaymentSerializer, LandLordDashboardQuerySerializer
+from .serializers import LandlordDashboardSerializer, PaymentSerializer, PaymentReceiptSerializer, LandLordDashboardQuerySerializer
 from .enums import PaymentStatus
 from django.utils import timezone
 from datetime import timedelta
@@ -21,23 +23,53 @@ from django.utils.dateparse import parse_date
 from django.db.models.functions import TruncWeek, TruncMonth    
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-#TODO: remember to delete the payments migrations and makemigrations.
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from datetime import timedelta
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
     return house_unit
 
+# redis_client = redis.Redis(host='localhost', port=6379, db=0)
+redis_client = redis.Redis(
+  host=settings.REDIS_CLIENT_HOST,
+  port=settings.REDIS_PORT,
+  password=settings.REDIS_PASSWORD)
+
 class AcceptPayment(APIView):
-    """The first stage of Paystack transaction. This endpoint accepts the email and amount of the user initializing the transaction.
-    **The landlord is only allowed to send the email of the tenant while the amount is gotten from the rent_price of the house unit.**"""
+    @swagger_auto_schema(
+        operation_description="Initialize a new transaction on Paystack. POST /payments/initialize-payment/{house_unit_id}",
+        manual_parameters=[
+            openapi.Parameter(
+                'house_unit_id',
+                openapi.IN_PATH,
+                description="The ID of the house unit",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="Payment initialized"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def post(self, request, house_unit_id):
         if request.user.is_authenticated:
             user = request.user
             house_unit = get_house_unit(house_unit_id=house_unit_id)
-            # email = request.data.get('email') # may input tenant's email here for onboarding
-            body_unicode = request.body.decode('utf-8')
-            body = json.loads(body_unicode)
-            email = body['email']
+            email = request.data.get('email') # may input tenant's email here for onboarding
+            # body_unicode = request.body.decode('utf-8')
+            # body = json.loads(body_unicode)
+            # email = body['email']
+            print('email::', email)
 
             amount = int(house_unit.rent_price*100)
             if not email:
@@ -65,6 +97,29 @@ class AcceptPayment(APIView):
     
 
 class VerifyPayment(APIView):
+    @swagger_auto_schema(
+        operation_description="Verify and complete a transaction on Paystack. GET /payments/verify-payment/{house_unit_id}",
+        manual_parameters=[
+            openapi.Parameter(
+                'house_unit_id',
+                openapi.IN_PATH,
+                description="The ID of the house unit",
+                type=openapi.TYPE_STRING,
+                required=True
+            ),
+            openapi.Parameter(
+                'ref',
+                openapi.IN_QUERY,
+                description="The ref of an initialized payment.",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: openapi.Response(description="Payment successfully verified."),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def get(self, request, house_unit_id):
         """pass reference as a query parameter in the url i.e: 'example.com/?reference=12gwe4323t3y4'"""
         if request.user.is_authenticated:
@@ -74,8 +129,10 @@ class VerifyPayment(APIView):
                 return Response({"error": "Reference must be passed as a query parameter in the url."},
                                 status=status.HTTP_400_BAD_REQUEST)
             verify_transaction = paystack.verify_payment(ref=ref)
+            if verify_transaction['response_data']['status'] == False:
+                return Response({'response data': verify_transaction},
+                                status=status.HTTP_400_BAD_REQUEST)
             transaction_status = verify_transaction['response_data']['data']['status']
-            print(ref)
             print('transaction status >>>', transaction_status)
             print('verify transaction >>>',verify_transaction)
             
@@ -84,6 +141,10 @@ class VerifyPayment(APIView):
             print('rent price >>>',house_unit.rent_price)
             payment = Payment.objects.get(reference=ref)
             print('payment::::', payment)
+
+            # store the paystack response in redis cache
+            redis_client.set(f'paystack_response_{ref}', json.dumps(verify_transaction['response_data']))
+            redis_client.expire(f'paystack_response_{ref}', timedelta(minutes=5))
 
             if house_unit:
                 # try:
@@ -103,27 +164,36 @@ class VerifyPayment(APIView):
                                                     'verify_transaction':verify_transaction,
                                                     'payment_obj': payment_serializer.data},
                                                     status=status.HTTP_200_OK)
-                            case 'failed':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
-                                payment.save()
-                                return Response({"message": "Payment failed. Please try again.",
-                                                    'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_400_BAD_REQUEST)
-                            case 'abandoned':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                            case 'pending':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
                                 payment.save()
                                 return Response({"message": "Payment abandoned. Transaction not completed.",
                                                     'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_100_CONTINUE)
+                                                    status=status.HTTP_HTTP_200_OK)
+                            case 'failed':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
+                                payment.save()
+                                return Response({"message": "Payment failed. Please try again.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_200_OK)
+                            case 'abandoned':
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
+                                print('transaction_id::', payment.transaction_id)
+                                print('customer_code:::', payment.customer_code) 
+                                payment.save()
+                                return Response({"message": "Payment abandoned. Transaction not completed.",
+                                                    'verify_transaction':verify_transaction},
+                                                    status=status.HTTP_200_OK)
                             case 'reversed':
-                                payment.transaction_id = verify_transaction['response_data']['data']['id'], None
-                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'], None
+                                payment.transaction_id = verify_transaction['response_data']['data']['id'] or None
+                                payment.customer_code = verify_transaction['response_data']['data']['customer']['customer_code'] or None
                                 payment.save()
                                 return Response({"message": "Payment was reversed.",
                                                     'verify_transaction':verify_transaction},
-                                                    status=status.HTTP_100_CONTINUE)
+                                                    status=status.HTTP_HTTP_200_OK)
                             case _:
                                 return Response({"message": "Unable to verify payment.",
                                                     'verify_transaction':verify_transaction},
@@ -139,17 +209,39 @@ class VerifyPayment(APIView):
                 #         "success": False,
                 #         "message": f'Your payment was not processed: {e}'
                 #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # generate receipt for the transaction
+
                 
             
 class CreatePlan(APIView):
-    """The landlord usertype should only be allowed to create a plan."""
+    @swagger_auto_schema(
+        operation_description="Create a payment plan Paystack. POST /payments/create-plan/",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name','interval', 'amount'],
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name of the payment plan.'),
+                'interval': openapi.Schema(type=openapi.TYPE_STRING, description='Frequency of this plan to charge the customer.'),
+                'amount': openapi.Schema(type=openapi.TYPE_INTEGER, description='Amount to charge per transaction for this plan.'),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
+                'invoice_limit': openapi.Schema(type=openapi.TYPE_INTEGER, description='Number of times the user will be charged when subscribed to this plan.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="Payment initialized"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
+    
     def post(self, request):
+        """The landlord usertype should only be allowed to create a plan."""
         # TODO: Calculate the amount equivalent for the interval selected usings signals
         # TODO: low-priority feature; add the user_type to the jwt payload
         if request.user.is_authenticated and request.user.user_type == 'Landlord':
             user = request.user
             name = request.data.get('name')
-            interval = request.data.get('interval')
+            interval = request.data.get('interval') 
             amount = request.data.get('amount')
             amount_int = int(amount)*100
             # print('amount >>', type(amount))
@@ -220,8 +312,30 @@ def get_plan(plan_id):
  
 
 class CreateSubscription(APIView):
-    """"Endpoint to create subscription for an available plan. The tenant subscribes to a plan he/she can afford."""
+    @swagger_auto_schema(
+        operation_description="Subscribe to plan created by the landlord. POST create-subscription/{plan_id}/",
+        manual_parameters=[
+            openapi.Parameter(
+                'plan_id',
+                openapi.IN_PATH,
+                description="The ID of the plan the tenant is subscribing to.",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            )
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'start_date': openapi.Schema(type=openapi.FORMAT_DATE, description='The date to start charging the user **"tenant"** for this plan.'),
+            },
+        ),
+        responses={
+            201: openapi.Response(description="SUBSCRIPTION CREATED SUCCESSFULLy"),
+            400: openapi.Response(description="Bad request"),
+        }
+    )
     def post(self, request, plan_id):
+        """Endpoint to create subscription for an available plan. The tenant subscribes to a plan they can afford."""
         if request.user.is_authenticated:   
             customer_email = request.user.email
             plan = get_plan(plan_id)
@@ -256,7 +370,21 @@ class CreateSubscription(APIView):
                                 )
 
 
-# TODO: make migrations for payments, subscription
+class PaymentHistory(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        payment_history = PaymentReceipt.objects.filter(customer=request.user)
+        if payment_history:
+            serialized_payment_history = PaymentReceiptSerializer(payment_history, many=True)
+            return Response({'message': f"Payment history for {user.email}....",
+                             "payment_history": serialized_payment_history.data},
+                             status=status.HTTP_200_OK)
+        elif not payment_history:
+            return Response({'message': "No payment history exists."},
+                             status=status.HTTP_204_NO_CONTENT)
+
+
 
 
 # A view for the Landlord Dashboard

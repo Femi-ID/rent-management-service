@@ -13,8 +13,7 @@ class House(models.Model):
     reg_license = models.CharField(max_length=100, blank=False)
     # image = models.ImageField()
     number_of_units = models.PositiveIntegerField()
-    # rent_price = models.PositiveIntegerField()
-    # availability = models.BooleanField()
+    # number_of_units = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f'House address: {self.address[:20]} >> Reg_License: {self.reg_license}'
@@ -29,6 +28,7 @@ class HouseUnit(models.Model):
     description = models.TextField(null=True, blank=True)
     rent_price = models.PositiveIntegerField(blank=True, null=True) 
     availability = models.BooleanField(default=False)
+    occupant = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='house_unit', on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
         return f"{self.unit_number} - {self.rent_price}"

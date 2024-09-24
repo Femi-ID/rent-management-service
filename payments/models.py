@@ -33,7 +33,7 @@ class Payment(models.Model):
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=PaymentStatus, default=PaymentStatus.PENDING)
-    transaction_id = models.BigIntegerField(blank=True ,null=True)
+    transaction_id = models.CharField(blank=True ,null=True)
     customer_code = models.CharField(max_length=20, null=True)
     authorization_code = models.CharField(max_length=20, null=True)
     authorization_url = models.URLField(max_length=70, editable=False, unique=True,
@@ -46,10 +46,25 @@ class Payment(models.Model):
     def __str__(self) -> str:
         return f'{self.user} >> amount: {self.amount}, verified: {self.is_verified}'
     
-    # def save(self, *args, **kwargs):
-    #     self.amount = self.amount * 100
-    #     return super().save(*args, **kwargs)
 
+class PaymentReceipt(models.Model):
+    payment_id = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='receipt')
+    customer =models.ForeignKey(User, on_delete=models.CASCADE)
+    email = models.EmailField()
+    amount = models.PositiveIntegerField()
+    reference = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=PaymentStatus, default=PaymentStatus.ABANDONED)
+    channel = models.CharField(max_length=10, blank=True, null=True)
+    bank = models.CharField(blank=True, null=True)
+    card_type = models.CharField(blank=True, null=True)
+    last4_card_digits = models.CharField(max_length=4, blank=True, null=True) 
+    transaction_id = models.CharField(blank=True ,null=True)
+    customer_code = models.CharField(max_length=20, null=True, blank=True)
+    # authorization_code = models.CharField(max_length=20, null=True)
+    # subscription_code = models.CharField(max_length=30, null=True, blank=True)
+    transaction_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    #TODO: create an image with all these details and store on the cloud (cloudinary)
 
 class PaymentPlan(models.Model):
     """Payment plan for subscriptions"""
@@ -80,4 +95,3 @@ class Subscription(models.Model):
     subscription_code = models.CharField(max_length=30)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    

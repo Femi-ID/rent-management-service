@@ -17,3 +17,10 @@ class TicketSerializer(serializers.Serializer):
         unit = self.context.get('unit')
         validated_data['unit'] = unit
         return Ticket.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        instance.subject = validated_data.get('subject', instance.subject)
+        instance.category = validated_data.get('category', instance.category)
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+        return instance 
