@@ -15,8 +15,8 @@ from datetime import timedelta
 import dj_database_url
 from decouple import config
 import os
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,14 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY",default="48fjjfjfkjejjjdk")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
-# DEBUG = True
+#DEBUG = os.environ.get('DEBUG')
+DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
-# ALLOWED_HOSTS = ['*']
+#ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -111,21 +111,21 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get('DATABASE_URL')
+#database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
-DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
+#DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
 # THE DATABASE YOU ARE TO WORK WITH WHEN TESTING:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#         'USER': '',
-#         'PASSWORD': '',
-#         'HOST': '', 
-#         'PORT': '',
-#     },
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "rentPadii",
+        "USER": "postgres",
+        "PASSWORD": "Pasword@49",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
+    }
+}
 # RUN: python manage.py makemigrations users
 #      python manage.py migrate
     #    python manage.py makemigrations
@@ -229,17 +229,24 @@ DOMAIN = 'rent-man.vercel.app' # (change to frontend localhost) the ACTIVATION_U
 #EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
 #EFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_PORT = config('EMAIL_PORT')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+EMAIL_BACKEND = config('EMAIL_BACKEND',default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD',default='rfjylszazywojkev')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER',default='lawrencecheck@gmail.com')
+EMAIL_PORT = config('EMAIL_PORT',default='587')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS',default='True')
 # # EMAIL_USE_SSL = config('EMAIL_USE_SSL')
-DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER',default='lawrencecheck@gmail.com')
 
 #PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 #PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
-PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
-PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY',default="sk_test_ffa65c29d9cd7841410e910f279c598f2fa54001")
+PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY",default="pk_test_032c66e0f437811f116901a4ba14a6a3190e8c86")
+
+
+RENT_PERIODS = {
+    'LAST_WEEK_DAYS': 7,
+    'LAST_MONTH_DAYS': 30,
+    'LAST_THREE_MONTHS_DAYS': 90,
+}

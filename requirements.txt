@@ -4,6 +4,7 @@ cffi
 charset-normalizer
 cryptography
 defusedxml
+decouple
 dj-database-url
 Django
 django-cors-headers

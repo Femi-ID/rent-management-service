@@ -13,11 +13,11 @@ class CreateHouse(APIView):
         print(user)
         if user.is_authenticated and user.user_type == 'Landlord':
             try:
-                address = request.POST.get('address', False)
-                city = request.POST['city']
-                state = request.POST['state']
-                reg_license = request.POST['reg_license']
-                number_of_units = request.POST['number_of_units']
+                address = request.data.get('address', False)
+                city = request.data.get('city', False)
+                state = request.data.get('state', False)
+                reg_license = request.data.get('reg_license', False)
+                number_of_units = request.data.get('number_of_units', False)
                 
                 if not address or not city or not state or not reg_license:
                     return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
@@ -25,15 +25,19 @@ class CreateHouse(APIView):
                 house = House.objects.create(owner=user, address=address, city=city,
                                             state=state, reg_license=reg_license,
                                             number_of_units=number_of_units)
-                serializer = HouseSerializer(house)
+                
+                house.save()
+
                 print(house)
+
+                serializer = HouseSerializer(house)
                 # use serializers ??
                 return Response({'message': 'Your house details has been added',
                                 'house details': serializer.data},
                                 status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({'message': 'Your house details could not be added',
-                                    'error': {e}})
+                                    'error': str(e)})
 
 
 class ListHousesAndUnits(APIView):
@@ -64,25 +68,27 @@ class CreateHouseUnit(APIView):
         try:
             user = request.user
             house = get_object_or_404(House, id=house_id)
-            unit_number = request.POST.get('unit_number', False)
-            unit_type = request.POST.get('unit_type', False)
-            description = request.POST.get('description', False)
-            rent_price = request.POST.get('rent_price', False)
-            availability = request.POST.get('availability', False)
+            unit_number = request.data.get('unit_number', False)
+            unit_type = request.data.get('unit_type', False)
+            description = request.data.get('description', False)
+            rent_price = request.data.get('rent_price', False)
+            availability = request.data.get('availability', False)
 
             if not (house, unit_number, unit_type, rent_price, availability):
                 return Response({'message': 'Request body incomplete, ensure all required fields are complete!'},
                                 status=status.HTTP_400_BAD_REQUEST)
             
-            house_unit = HouseUnit.objects.create(house=house_id, unit_number=unit_number, 
+            house_unit = HouseUnit.objects.create(house=house, unit_number=unit_number, 
                                                 description=description, rent_price=rent_price,
                                                 availability=availability)
+            
+            house_unit.save()
             serializer = HouseUnitSerializer(house_unit)
             return Response({'message': 'Your house details has been added',
                             'house details': serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'message': 'Your house details could not be added',
-                             'error': {e}})
+                             'error': str(e)})
 
 
