@@ -8,3 +8,5 @@ backup.json
 /__pycache__/**
 payments/redis-doc.txt
 payments/utils.py
+users/migrations/0004_alter_onboarduser_options.py
+payments/migrations/0006_alter_payment_transaction_id_and_more.py
