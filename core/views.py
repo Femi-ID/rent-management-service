@@ -141,13 +141,13 @@ class ListHouseUnits(APIView):
     def get(self, request, owner_id, house_id):
         user = request.user
         if user.user_type == 'Landlord':
-            house_units = redis_client.get(f'house-units-{user.id}')
+            house_units = redis_client.get(f'house-units-{house_id}')
             if not house_units:
                 house_units = HouseUnit.objects.filter(house__id=house_id, house__owner=owner_id).all()
                 if house_units:
                     serializer = HouseUnitSerializer(house_units, many=True)
-                    redis_client.set(f'house-units-{user.id}', json.dumps(serializer.data))
-                    redis_client.expire(f'house-units-{user.id}', timedelta(hours=2))
+                    redis_client.set(f'house-units-{house_id}', json.dumps(serializer.data))
+                    redis_client.expire(f'house-units-{house_id}', timedelta(hours=2))
                     print("data loaded from DB")
                     return Response({'message':'The list of units owned by the current user',
                                     'house units': serializer.data},
