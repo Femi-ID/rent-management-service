@@ -183,6 +183,7 @@ CORS_ALLOW_ALL_ORIGINS = True  # CHANGE THIS DURING PRODUCTION
 
 
 REST_FRAMEWORK = {
+    "NON_FIELD_ERRORS_KEYS": "errors",
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -294,3 +295,10 @@ REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 # REDIS_CLIENT_HOST = config('REDIS_CLIENT_HOST')
 # REDIS_PORT = config('REDIS_PORT')
 # REDIS_PASSWORD = config('REDIS_PASSWORD')
+
+if not DEBUG:
+    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+    # and renames the files with unique names for each version to support long-term caching
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
