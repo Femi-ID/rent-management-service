@@ -13,7 +13,7 @@ from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
-from .serializers import PaymentSerializer, PaymentReceiptSerializer, LandlordDashboardSerializer
+from .serializers import PaymentSerializer, PaymentReceiptSerializer, LandlordDashboardSerializer, LandLordDashboardQuerySerializer
 from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -379,7 +379,7 @@ class PaymentHistory(APIView):
 # A view for the Landlord Dashboard
 class LandlordDashBoard(GenericAPIView):
 
-    serializer_class = LandlordDashboardSerializer()
+    serializer_class = LandlordDashboardSerializer
    
     def get_grouped_data(self, payments, period_type):
         if period_type == 'daily':
@@ -395,12 +395,12 @@ class LandlordDashBoard(GenericAPIView):
             grouped_data = []  # Default empty list if no valid grouping
         return grouped_data
      
-    @swagger_auto_schema(
-            query_serializer=LandLordDashboardQuerySerializer,
-            responses={200: LandlordDashboardSerializer, 400: 'Bad Request', 401:'Unauthorized access', 500: 'Internal Server Error'} , # Documenting a 200 OK response
-            operation_description="Period types: 'daily', 'weekly', 'monthly', 'three_months'. Use 'custom' with start_date and end_date."
+    # @swagger_auto_schema(
+    #         query_serializer=LandLordDashboardQuerySerializer,
+    #         responses={200: LandlordDashboardSerializer, 400: 'Bad Request', 401:'Unauthorized access', 500: 'Internal Server Error'} , # Documenting a 200 OK response
+    #         operation_description="Period types: 'daily', 'weekly', 'monthly', 'three_months'. Use 'custom' with start_date and end_date."
             
-        )
+    #     )
 
     def get(self, request):
 
@@ -516,8 +516,7 @@ class LandlordDashBoard(GenericAPIView):
                     # Filter payments based on the created_at field
                          payments = payments.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
 
-                         previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date
-    )
+                         previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
                          # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, period_type)
 
