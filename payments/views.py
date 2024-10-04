@@ -13,7 +13,7 @@ from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
-from .serializers import PaymentSerializer, PaymentReceiptSerializer
+from .serializers import PaymentSerializer, PaymentReceiptSerializer, LandlordDashboardSerializer
 from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -379,7 +379,7 @@ class PaymentHistory(APIView):
 # A view for the Landlord Dashboard
 class LandlordDashBoard(GenericAPIView):
 
-    serializer_class = LandlordDashboardSerializer
+    serializer_class = LandlordDashboardSerializer()
    
     def get_grouped_data(self, payments, period_type):
         if period_type == 'daily':
