@@ -368,6 +368,11 @@ class CreateSubscription(APIView):
 
 
 class PaymentHistory(APIView):
+    # @swagger_auto_schema(
+    #         query_serializer=LandLordDashboardQuerySerializer,
+    #         responses={200: LandlordDashboardSerializer, 400: 'Bad Request', 401:'Unauthorized access', 500: 'Internal Server Error'} , # Documenting a 200 OK response
+    #         operation_description="Period types: 'daily', 'weekly', 'monthly', 'three_months'. Use 'custom' with start_date and end_date."
+    # )
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         user = request.user
@@ -399,13 +404,6 @@ class LandlordDashBoard(GenericAPIView):
         else:
             grouped_data = []  # Default empty list if no valid grouping
         return grouped_data
-     
-    @swagger_auto_schema(
-            query_serializer=LandLordDashboardQuerySerializer,
-            responses={200: LandlordDashboardSerializer, 400: 'Bad Request', 401:'Unauthorized access', 500: 'Internal Server Error'} , # Documenting a 200 OK response
-            operation_description="Period types: 'daily', 'weekly', 'monthly', 'three_months'. Use 'custom' with start_date and end_date."
-            
-        )
 
     def get(self, request):
 
