@@ -380,4 +380,3 @@ class PaymentHistory(APIView):
             return Response({'message': "No payment history exists."},
                              status=status.HTTP_204_NO_CONTENT)
 
-
