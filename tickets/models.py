@@ -23,6 +23,8 @@ class Ticket(models.Model):
     status = models.CharField(max_length=100, choices=TICKET_STATUS)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    #assigning cost to the model
+    # cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self,):
         return f"Ticket for {self.unit.unit_number}"
