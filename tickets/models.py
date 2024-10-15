@@ -1,7 +1,5 @@
 from django.db import models
 from core.models import HouseUnit
-from django.db.models import Sum
-from django.utils import timezone
 
 # Create your models here.
 class Ticket(models.Model):
@@ -30,4 +28,3 @@ class Ticket(models.Model):
 
     def __str__(self,):
         return f"Ticket for {self.unit.unit_number}"
-    
