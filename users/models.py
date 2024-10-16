@@ -69,7 +69,7 @@ class User(AbstractUser, PermissionsMixin):
     user_type = models.CharField(max_length=8, choices=UserType, default=UserType.TENANT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    house_address  = models.CharField(max_length=300, null=True, blank=True)
     # create UserManager object to use this custom model.
     objects = CustomUserManager()
 
@@ -96,3 +96,9 @@ class OnboardUser(models.Model):
     #     return f"{self.email} - {self.house_unit}"
 
 
+# first name
+# middle
+# last name
+# username
+# phone no
+# addy
