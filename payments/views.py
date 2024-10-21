@@ -1,13 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 
 from django.db.models import QuerySet
 
 from core import serializer
-from tickets.models import Ticket
 # from symbol import decorator
 from .models import Payment, PaymentPlan, Subscription, PaymentReceipt
+from django.db.models import Sum
+from django.utils.dateparse import parse_date
+from django.db.models.functions import TruncMonth, TruncWeek
+from django.utils import timezone
 from users.models import User
+from tickets.models import Ticket
 from rest_framework.response import Response
 from rest_framework import status, permissions
 import requests, json, redis
@@ -20,11 +25,6 @@ from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import timedelta
-from rest_framework.generics import GenericAPIView
-from django.db.models import Sum
-from django.utils.dateparse import parse_date
-from django.db.models.functions import TruncWeek, TruncMonth 
-from django.utils import timezone
 
 def get_house_unit(house_unit_id):
     house_unit = get_object_or_404(HouseUnit, id=house_unit_id)

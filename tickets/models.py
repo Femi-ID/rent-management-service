@@ -1,7 +1,7 @@
 from django.db import models
 from core.models import HouseUnit
-from django.db.models import Sum
 from django.utils import timezone
+from django.db.models import Sum
 
 # Create your models here.
 class Ticket(models.Model):
@@ -31,14 +31,12 @@ class Ticket(models.Model):
     def __str__(self,):
         return f"Ticket for {self.unit.unit_number}"
     
-     #adding class methods
     @classmethod
     def total_maintenance_cost(cls, start_date, end_date):
         return cls.objects.filter(
             category='MAINT',
             created_at__range=(start_date, end_date)
         ).aggregate(total_cost=Sum('cost'))['total_cost'] or 0
-
     def get_resolved_maintenance_tickets_this_month(self):
         # Get the first and last day of the current month
         today = timezone.now()
@@ -52,13 +50,11 @@ class Ticket(models.Model):
             created_at__gte=first_day_of_month,
             created_at__lt=next_month
         ).count()
-
         total_tickets = Ticket.objects.filter(
             category='MAINT',
             created_at__gte=first_day_of_month,
             created_at__lt=next_month
         ).count()
-
         return {'repairs':repairs,
                 'total_tickets':total_tickets
                 }
