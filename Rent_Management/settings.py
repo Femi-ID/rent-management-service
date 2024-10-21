@@ -26,15 +26,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-# SECRET_KEY = config("SECRET_KEY")
+#SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY",default="jkaiejiaijfjiei")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG')
-# DEBUG = True
+#DEBUG = os.environ.get('DEBUG')
+DEBUG = True
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
-# ALLOWED_HOSTS = ['*']
+#ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(" ")
+ALLOWED_HOSTS = ['*']
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -118,17 +118,16 @@ DATABASES = {
 }
 database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
-DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
+#DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
 # THE DATABASE YOU ARE TO WORK WITH WHEN TESTING:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#         'USER': '',
-#         'PASSWORD': '',
-#         'HOST': '', 
-#         'PORT': '',
+#DATABASES = {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'rentoo',
+#        'USER': 'postgres',
+#         'PASSWORD': 'Pasword@49',
+#         'HOST': 'localhost', 
+#         'PORT': '5432',
 #     },
 # }
 # RUN: python manage.py makemigrations users
@@ -234,20 +233,20 @@ EMAIL_PORT = os.environ.get('EMAIL_PORT')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
-# EMAIL_BACKEND = config('EMAIL_BACKEND')
-# EMAIL_HOST = config('EMAIL_HOST')
-# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-# EMAIL_PORT = config('EMAIL_PORT')
-# EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+#EMAIL_BACKEND = config('EMAIL_BACKEND'.EmailBackend")
+#EMAIL_HOST = config('EMAIL_HOST')
+#EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+#EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+#EMAIL_PORT = config('EMAIL_PORT',default="587")
+#EMAIL_USE_TLS = config('EMAIL_USE_TLS',default="True")
 # # EMAIL_USE_SSL = config('EMAIL_USE_SSL')
-# DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+#DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER', default="lawrencecheck@gmail.com")
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
-# PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
-# PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
+#PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
+#PAYSTACK_PUBLIC_KEY = config("PAYSTACK_PUBLIC_KEY")
 
 # settings.py
 

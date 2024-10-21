@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from rest_framework.views import APIView
 
+from django.db.models import QuerySet
+
 from core import serializer
 from tickets.models import Ticket
 # from symbol import decorator
@@ -387,11 +389,13 @@ class PaymentHistory(APIView):
                              status=status.HTTP_204_NO_CONTENT)
 
 # A view for the Landlord Dashboard
-class LandlordDashBoard(GenericAPIView):
 
+class LandlordDashBoard(GenericAPIView):
     serializer_class = LandlordDashboardSerializer
+
    
     def get_grouped_data(self, payments, period_type):
+    
         if period_type == 'daily':
             grouped_data = payments.values('created_at__date').annotate(total_amount=Sum('amount')).order_by('created_at__date')
         elif period_type == 'weekly':
@@ -404,6 +408,17 @@ class LandlordDashBoard(GenericAPIView):
         else:
             grouped_data = []  # Default empty list if no valid grouping
         return grouped_data
+    
+    
+    @swagger_auto_schema(
+            query_serializer=LandLordDashboardQuerySerializer,
+             responses={200: LandlordDashboardSerializer, 400: 'Bad Request', 401:'Unauthorized access', 500: 'Internal Server Error'} , # Documenting a 200 OK response
+            operation_description=(
+            "Provide 'period_type' as one of 'daily', 'weekly', 'monthly', "
+            "'three_months', or 'custom'. If 'custom' is selected, "
+            "'start_date' and 'end_date' are required."
+        )
+    )
 
     def get(self, request):
 
@@ -438,8 +453,8 @@ class LandlordDashBoard(GenericAPIView):
                     previous_end_date = previous_start_date
 
                     # Filter payments for today
-                    payments = payments.filter(created_at__date=today)
-                    previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
+                    payments = Payment.objects.filter(created_at__date=today)
+                    previous_period_payments = Payment.objects.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
                      # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, period_type)
 
@@ -460,8 +475,8 @@ class LandlordDashBoard(GenericAPIView):
                     previous_end_date = current_start_date - timedelta(days=1)
 
                     # Filter payments for the last 7 days, including today
-                    payments = payments.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
-                    previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
+                    payments = Payment.objects.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
+                    previous_period_payments = Payment.objects.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
   # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, period_type)
 
@@ -478,8 +493,8 @@ class LandlordDashBoard(GenericAPIView):
                     previous_end_date = current_start_date - timedelta(days=1)
 
                     # Filter payments for the last 30 days, including today
-                    payments = payments.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
-                    previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
+                    payments = Payment.objects.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
+                    previous_period_payments = Payment.objects.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
                      # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, period_type)
 
@@ -497,8 +512,8 @@ class LandlordDashBoard(GenericAPIView):
                     previous_end_date = current_start_date - timedelta(days=1)
 
                     # Filter payments for the last 90 days (approximately 3 months), including today
-                    payments = payments.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
-                    previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
+                    payments = Payment.objects.filter(created_at__date__gte=current_start_date, created_at__date__lte=today)
+                    previous_period_payments =Payment.objects.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date)
                      # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, 'monthly')
 
@@ -517,9 +532,9 @@ class LandlordDashBoard(GenericAPIView):
                          previous_end_date = start_date -timedelta(days=1)
 
                     # Filter payments based on the created_at field
-                         payments = payments.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
+                         payments = Payment.objects.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
 
-                         previous_period_payments = payments.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date
+                         previous_period_payments = Payment.objects.filter(created_at__date__gte=previous_start_date, created_at__date__lte=previous_end_date
     )
                          # Group data based on the specified group_by parameter
                     grouped_data = self.get_grouped_data(payments, period_type)

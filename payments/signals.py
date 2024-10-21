@@ -81,33 +81,31 @@ def create_receipt_for_payment(sender, instance, created, *args, **kwargs):
         
     send_email_with_pdf_image_attachment(reference=reference, 
                                          amount=int(instance.amount/100), 
-                                         status=receipt.status, 
+                                        status=receipt.status, 
                                          channel=receipt.channel, 
                                          bank=receipt.bank, 
                                          card_type=receipt.card_type, 
-                                         last4_card_digits=receipt.last4_card_digits, 
-                                         transaction_id=receipt.transaction_id,
-                                         customer_code=receipt.customer_code, 
+                                        customer_code=receipt.customer_code, 
                                          transaction_date=receipt.transaction_date)
 
-            # if paystack_response_jsonify['data']['status'] == 'abandoned':
-            #     receipt.channel=paystack_response_jsonify['data']['channel'] or ''
-            #     receipt.transaction_id=paystack_response_jsonify['data']['id'] or None
-            #     receipt.customer_code=paystack_response_jsonify['data']['customer']['customer_code']
-            #     receipt.transaction_date=paystack_response_jsonify['data']['transaction_date']
-            #     print(f'receipt created. Reference: {reference}, Status: {receipt.status}')
-            #     receipt.save()
+    if paystack_response_jsonify['data']['status'] == 'abandoned':
+                 receipt.channel=paystack_response_jsonify['data']['channel'] or ''
+                 receipt.transaction_id=paystack_response_jsonify['data']['id'] or None
+                 receipt.customer_code=paystack_response_jsonify['data']['customer']['customer_code']
+                 receipt.transaction_date=paystack_response_jsonify['data']['transaction_date']
+                 print(f'receipt created. Reference: {reference}, Status: {receipt.status}')
+                 receipt.save()
 
-            # if paystack_response_jsonify['data']['status'] == 'failed':
-            #     receipt.channel=paystack_response_jsonify['data']['channel'] or ''
-            #     receipt.bank=paystack_response_jsonify['data']['authorization']['bank'] or ''
-            #     receipt.card_type=paystack_response_jsonify['data']['authorization']['card_type'] or None
-            #     receipt.last4_card_digits=paystack_response_jsonify['data']['authorization']['last4'] or None
-            #     receipt.transaction_id=paystack_response_jsonify['data']['id'] or None
-            #     receipt.customer_code=paystack_response_jsonify['data']['customer']['customer_code']
-            #     receipt.transaction_date=paystack_response_jsonify['data']['transaction_date']
-            #     print(f'receipt created. Reference: {reference}, Status: {receipt.status}')
-            #     receipt.save()
+    if paystack_response_jsonify['data']['status'] == 'failed':
+                 receipt.channel=paystack_response_jsonify['data']['channel'] or ''
+                 receipt.bank=paystack_response_jsonify['data']['authorization']['bank'] or ''
+                 receipt.card_type=paystack_response_jsonify['data']['authorization']['card_type'] or None
+                 receipt.last4_card_digits=paystack_response_jsonify['data']['authorization']['last4'] or None
+                 receipt.transaction_id=paystack_response_jsonify['data']['id'] or None
+                 receipt.customer_code=paystack_response_jsonify['data']['customer']['customer_code']
+                 receipt.transaction_date=paystack_response_jsonify['data']['transaction_date']
+                 print(f'receipt created. Reference: {reference}, Status: {receipt.status}')
+                 receipt.save()
             
 
     

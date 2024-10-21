@@ -57,9 +57,6 @@ class LandlordDashboardSerializer(serializers.Serializer):
     grouped_data = serializers.ListField(
         child=serializers.DictField()  # or a nested serializer if needed
     )
-    fields = ['house_unit', 'amount', 'reference', 'is_verified', 'transaction_id', 'status', 'customer_code', 'authorization_code']
-
-
     
     
     
