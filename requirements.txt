@@ -1,4 +1,5 @@
 asgiref
+celery
 certifi
 cffi
 charset-normalizer
