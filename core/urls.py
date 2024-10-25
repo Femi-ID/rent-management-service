@@ -10,4 +10,8 @@ urlpatterns = [
     path('onboard-user/', views.OnboardUser.as_view(), name='onboard-user'),
     # path('onboard-user/<int:house_unit_id>/', views.OnboardUser.as_view(), name='onboard-user'),  
     path('tenant-dashboard/', views.TenantDashboard.as_view(), name='tenant-dashboard'), 
+
+    path('<str:house_id>/', views.HouseDetailView.as_view(), name='house-detail'),
+    path('house-unit/<str:house_unit_id>/', views.HouseUnitDetailView.as_view(), name='house-unit-detail'),
+    path('lease/<str:house_unit_id>/', views.LeaseAgreementView.as_view(), name='lease-agreement'), 
 ]

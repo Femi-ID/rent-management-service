@@ -17,6 +17,7 @@ from decouple import config
 import os
 # from dotenv import load_dotenv
 # load_dotenv()
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -240,7 +241,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 # EMAIL_PORT = config('EMAIL_PORT')
 # EMAIL_USE_TLS = config('EMAIL_USE_TLS')
-# # EMAIL_USE_SSL = config('EMAIL_USE_SSL')
+# # EMAIL_USE_SSL = config('EMAIL_USE_SSL') 
 # DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
