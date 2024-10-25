@@ -319,21 +319,21 @@ class TenantDashboard(APIView):
 class HouseDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     # create a method to view a house
-    @swagger_auto_schema(
-        operation_description="View the details of a house. GET /houses/<str:house_id>/",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_id',
-                openapi.IN_PATH,
-                description="The ID of the house.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        responses={
-            200: openapi.Response(description="Returned the details of the house.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="View the details of a house. GET /houses/<str:house_id>/",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     responses={
+    #         200: openapi.Response(description="Returned the details of the house.")
+    #     }
+    # )
     def get(self, request, house_id):
         house = get_object_or_404(House, id=house_id)
         serializer = HouseSerializer(house)
@@ -342,33 +342,33 @@ class HouseDetailView(APIView):
                         status=status.HTTP_200_OK)
         
     # create a method to update a house
-    @swagger_auto_schema(
-        operation_description="Update a house in the application. PUT /houses/<str:house_id>",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_id',
-                openapi.IN_PATH,
-                description="The ID of the house.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['address', 'city', 'state', 'reg_license'],
-            properties={
-                'address': openapi.Schema(type=openapi.TYPE_STRING, description='Address of the house.'),
-                'city': openapi.Schema(type=openapi.TYPE_STRING, description='City of the house location.'),
-                'state': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.'),
-                'reg_license': openapi.Schema(type=openapi.TYPE_STRING, description='Registration license of the house.'),
-            },
-        ),
-        responses={
-            201: openapi.Response(description="House Updated Successfully"),
-            400: openapi.Response(description="Bad request"),
-            401: openapi.Response(description="Only landlords can access this view.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Update a house in the application. PUT /houses/<str:house_id>",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     request_body=openapi.Schema(
+    #         type=openapi.TYPE_OBJECT,
+    #         required=['address', 'city', 'state', 'reg_license'],
+    #         properties={
+    #             'address': openapi.Schema(type=openapi.TYPE_STRING, description='Address of the house.'),
+    #             'city': openapi.Schema(type=openapi.TYPE_STRING, description='City of the house location.'),
+    #             'state': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.'),
+    #             'reg_license': openapi.Schema(type=openapi.TYPE_STRING, description='Registration license of the house.'),
+    #         },
+    #     ),
+    #     responses={
+    #         201: openapi.Response(description="House Updated Successfully"),
+    #         400: openapi.Response(description="Bad request"),
+    #         401: openapi.Response(description="Only landlords can access this view.")
+    #     }
+    # )
     def put(self, request, house_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -389,22 +389,22 @@ class HouseDetailView(APIView):
         return Response({'message': 'Authentication required to update house details'}, status=status.HTTP_401_UNAUTHORIZED)
         
         
-    @swagger_auto_schema(
-        operation_description="Delete the house for the system. DELETE /houses/<str:house_id>/",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_id',
-                openapi.IN_PATH,
-                description="The ID of the house.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        responses={
-            200: openapi.Response(description="Deletes the house successfully"),
-            401: openapi.Response(description="Only landlords can access this view.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Delete the house for the system. DELETE /houses/<str:house_id>/",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     responses={
+    #         200: openapi.Response(description="Deletes the house successfully"),
+    #         401: openapi.Response(description="Only landlords can access this view.")
+    #     }
+    # )
     def delete(self, request, house_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -418,21 +418,21 @@ class HouseDetailView(APIView):
 
 class HouseUnitDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    @swagger_auto_schema(
-    operation_description="View the details of a house unit. GET /houses/house-unit/<str:house_unit_id>/",
-    manual_parameters=[
-        openapi.Parameter(
-            'house_unit_id',
-            openapi.IN_PATH,
-            description="The ID of the house unit you want to view.",
-            type=openapi.TYPE_STRING,
-            required=True
-        )
-    ],
-    responses={
-        200: openapi.Response(description="Returned the details of the house unit.")
-    }
-    )
+    # @swagger_auto_schema(
+    # operation_description="View the details of a house unit. GET /houses/house-unit/<str:house_unit_id>/",
+    # manual_parameters=[
+    #     openapi.Parameter(
+    #         'house_unit_id',
+    #         openapi.IN_PATH,
+    #         description="The ID of the house unit you want to view.",
+    #         type=openapi.TYPE_STRING,
+    #         required=True
+    #     )
+    # ],
+    # responses={
+    #     200: openapi.Response(description="Returned the details of the house unit.")
+    # }
+    # )
     def get(self, request, house_unit_id):
         house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
         serializer = HouseUnitSerializer(house_unit)
@@ -441,35 +441,35 @@ class HouseUnitDetailView(APIView):
                         status=status.HTTP_200_OK)
         
     # create method for updating a house unit
-    @swagger_auto_schema(
-        operation_description="Update house units details. PUT /houses/house-unit/<str:house_unit_id>/",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_unit_id',
-                openapi.IN_PATH,
-                description="The ID of the house unit",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['house', 'unit_number', 'unit_type', 'rent_price', 'availability'],
-        properties={
-            'house': openapi.Schema(type=openapi.TYPE_STRING, description='House ID.'),
-            'unit_number': openapi.Schema(type=openapi.TYPE_STRING, description='This is self-descriptive.'),
-            'unit_type': openapi.Schema(type=openapi.TYPE_STRING, description='Example: flat, duplex, self-contain....'),
-            'rent_price': openapi.Schema(type=openapi.TYPE_INTEGER, description='Amount for the rent.'),
-            'availability': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Boolean:: True/False.'),
-            'description': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.')
-        }
-        ),
-        responses={
-            201: openapi.Response(description="Your house units details has been updated."),
-            400: openapi.Response(description="Bad request, check that the data you sent is of the correct type and complete."),
-            401: openapi.Response(description="You are not authorized to update a unit"),
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Update house units details. PUT /houses/house-unit/<str:house_unit_id>/",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_unit_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house unit",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     required=['house', 'unit_number', 'unit_type', 'rent_price', 'availability'],
+    #     properties={
+    #         'house': openapi.Schema(type=openapi.TYPE_STRING, description='House ID.'),
+    #         'unit_number': openapi.Schema(type=openapi.TYPE_STRING, description='This is self-descriptive.'),
+    #         'unit_type': openapi.Schema(type=openapi.TYPE_STRING, description='Example: flat, duplex, self-contain....'),
+    #         'rent_price': openapi.Schema(type=openapi.TYPE_INTEGER, description='Amount for the rent.'),
+    #         'availability': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Boolean:: True/False.'),
+    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='State of the house location.')
+    #     }
+    #     ),
+    #     responses={
+    #         201: openapi.Response(description="Your house units details has been updated."),
+    #         400: openapi.Response(description="Bad request, check that the data you sent is of the correct type and complete."),
+    #         401: openapi.Response(description="You are not authorized to update a unit"),
+    #     }
+    # )
     def put(self, request, house_unit_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -486,22 +486,22 @@ class HouseUnitDetailView(APIView):
                             status=status.HTTP_401_UNAUTHORIZED)
         
     # create a method for deleting a house unit
-    @swagger_auto_schema(
-        operation_description="Delete the house unit for the system. DELETE /houses/house-unit/<str:house_unit_id>/",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_unit_id',
-                openapi.IN_PATH,
-                description="The ID of the house unit.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        responses={
-            200: openapi.Response(description="Deletes the house unit successfully"),
-            401: openapi.Response(description="Only landlords can access this view.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Delete the house unit for the system. DELETE /houses/house-unit/<str:house_unit_id>/",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_unit_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house unit.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     responses={
+    #         200: openapi.Response(description="Deletes the house unit successfully"),
+    #         401: openapi.Response(description="Only landlords can access this view.")
+    #     }
+    # )
     def delete(self, request, house_unit_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -515,30 +515,30 @@ class HouseUnitDetailView(APIView):
 
 
 class LeaseAgreementView(APIView):
-    @swagger_auto_schema(
-        operation_description="Add a Lease agreement for a house unit. POST /houses/lease/<str:house_unit_id>",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_unit_id',
-                openapi.IN_PATH,
-                description="The ID of the house unit.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['document'],
-            properties={
-                'document': openapi.Schema(type=openapi.TYPE_STRING, description='The document which contains the lease agreement.'),
-            },
-        ),
-        responses={
-            201: openapi.Response(description="Lease agreement created created"),
-            400: openapi.Response(description="Bad request"),
-            401: openapi.Response(description="Only landlords can access this view.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Add a Lease agreement for a house unit. POST /houses/lease/<str:house_unit_id>",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_unit_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house unit.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     request_body=openapi.Schema(
+    #         type=openapi.TYPE_OBJECT,
+    #         required=['document'],
+    #         properties={
+    #             'document': openapi.Schema(type=openapi.TYPE_STRING, description='The document which contains the lease agreement.'),
+    #         },
+    #     ),
+    #     responses={
+    #         201: openapi.Response(description="Lease agreement created created"),
+    #         400: openapi.Response(description="Bad request"),
+    #         401: openapi.Response(description="Only landlords can access this view.")
+    #     }
+    # )
     def post(self, request, house_unit_id):
         user = request.user
         if user.user_type == 'Landlord':
@@ -562,22 +562,22 @@ class LeaseAgreementView(APIView):
     
 
     # method to delete a lease agreement
-    @swagger_auto_schema(
-        operation_description="Delete the lease agreement for the system. DELETE /houses/lease/<str:house_unit_id>/",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_unit_id',
-                openapi.IN_PATH,
-                description="The ID of the house unit.",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        responses={
-            200: openapi.Response(description="Deletes the lease agreement successfully"),
-            401: openapi.Response(description="Only landlords can access this view.")
-        }
-    )
+    # @swagger_auto_schema(
+    #     operation_description="Delete the lease agreement for the system. DELETE /houses/lease/<str:house_unit_id>/",
+    #     manual_parameters=[
+    #         openapi.Parameter(
+    #             'house_unit_id',
+    #             openapi.IN_PATH,
+    #             description="The ID of the house unit.",
+    #             type=openapi.TYPE_STRING,
+    #             required=True
+    #         )
+    #     ],
+    #     responses={
+    #         200: openapi.Response(description="Deletes the lease agreement successfully"),
+    #         401: openapi.Response(description="Only landlords can access this view.")
+    #     }
+    # )
     def delete(self, request, house_unit_id):
         user = request.user
         if user.user_type == 'Landlord':
