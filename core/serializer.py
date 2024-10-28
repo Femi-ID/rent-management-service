@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import House, HouseUnit
+from .models import House, HouseUnit, LeaseAgreement
 from users.models import OnboardUser
 import json
 
@@ -65,3 +65,23 @@ class OnboardUserSerializer(serializers.ModelSerializer):
 
     # def get_house_address(self, object):
     #     return object.house.address
+
+class LeaseAgreementSerializer(serializers.ModelSerializer):
+    document = serializers.FileField()
+    created_by = serializers.PrimaryKeyRelatedField(read_only=True)  
+    unit_number = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LeaseAgreement
+        fields = ["document", 'created_by', 'unit_number'] 
+    
+    def create(self, validated_data):
+        house_unit = self.context.get('house_unit')
+        created_by = self.context['user']
+        validated_data['house_unit'] = house_unit
+        validated_data['created_by'] = created_by
+        lease = LeaseAgreement.objects.create(**validated_data)
+        return lease 
+    
+    def get_unit_number(self, object):
+        return object.house_unit.unit_number
