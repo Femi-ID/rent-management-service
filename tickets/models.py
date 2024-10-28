@@ -12,7 +12,7 @@ class Ticket(models.Model):
     ]
 
     TICKET_STATUS = [
-        ('RESOLVED', 'Open'),
+        ('RESOLVED', 'Resolved'),
         ('PROCESSING', 'In Process'),
         ('DECLINED', 'Declined'),
     ]
