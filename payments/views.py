@@ -20,7 +20,7 @@ from django.conf import settings
 from .paystack import paystack
 from django.http import JsonResponse
 from core.models import HouseUnit
-from .serializers import PaymentSerializer, PaymentReceiptSerializer
+from .serializers import LandlordDashboardSerializer, PaymentSerializer, PaymentReceiptSerializer
 from .enums import PaymentStatus
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
