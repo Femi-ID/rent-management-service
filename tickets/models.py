@@ -2,6 +2,7 @@ from django.db import models
 from core.models import HouseUnit
 from django.utils import timezone
 from django.db.models import Sum
+from .enums import TicketStatus
 
 # Create your models here.
 class Ticket(models.Model):
@@ -22,7 +23,7 @@ class Ticket(models.Model):
     unit = models.ForeignKey(HouseUnit, on_delete=models.CASCADE) 
     # assign = models.CharField(max_length=50)
     category = models.CharField(max_length=100, choices=TICKET_CATEGORY)
-    status = models.CharField(max_length=100, choices=TICKET_STATUS)
+    status = models.CharField(max_length=100, choices=TICKET_STATUS, default=TicketStatus.PROCESSING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     #assigning cost to the model
