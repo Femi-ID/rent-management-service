@@ -303,6 +303,7 @@ def get_plan(plan_id):
  
 
 class CreateSubscription(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     @swagger_auto_schema(
         operation_description="Subscribe to plan created by the landlord. POST create-subscription/{plan_id}/",
         manual_parameters=[

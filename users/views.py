@@ -15,25 +15,25 @@ from drf_yasg import openapi
 class UserProfile(APIView):
     permission_classes = [permissions.IsAuthenticated]
     @swagger_auto_schema(
-        operation_description="This view displays the user's personal information. POST /payments/initialize-payment/{house_unit_id}",
-        manual_parameters=[
-            openapi.Parameter(
-                'house_unit_id',
-                openapi.IN_PATH,
-                description="The ID of the house unit",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['email'],
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
-            },
-        ),
+        operation_description="This view displays the user's personal information.",
+        # manual_parameters=[
+        #     openapi.Parameter(
+        #         'house_unit_id',
+        #         openapi.IN_PATH,
+        #         description="The ID of the house unit",
+        #         type=openapi.TYPE_STRING,
+        #         required=True
+        #     )
+        # ],
+        # request_body=openapi.Schema(
+        #     type=openapi.TYPE_OBJECT,
+        #     required=['email'],
+        #     properties={
+        #         'email': openapi.Schema(type=openapi.TYPE_STRING, description='Email address of the user making payment.'),
+        #     },
+        # ),
         responses={
-            201: openapi.Response(description="Payment initialized"),
+            201: openapi.Response(description="User Profile successfully retrieved."),
             400: openapi.Response(description="Bad request"),
         }
     )
