@@ -47,6 +47,7 @@ urlpatterns = [
     path('payments/', include('payments.urls')),
     path('houses/', include('core.urls')),
     path('tickets/', include('tickets.urls')),
+    path('users/', include('users.urls')),
     
 
     # swagger route for documentation
