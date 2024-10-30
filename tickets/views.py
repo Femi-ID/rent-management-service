@@ -49,26 +49,15 @@ class CreateTickets(APIView):
 # View all tickets
 class TicketsListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
     def get(self, request):
-
-        # if request.user.user_type != 'Landlord':
-        #     return Response({
-        #         'msg': 'User does not have the correct role to register a house.',
-        #         'isSuccess': False
-        #     }, status=403)  # Forbidden
-        
-        tickets = Ticket.objects.filter(unit__house__owner=request.user)  
-        data = [] 
-        for ticket in tickets:
-            serializer = TicketSerializer(ticket)  # serializes the model instance to dict
-            ticket_data = {
-                "id": ticket.pk,
-                "data": serializer.data,
-            }
-            data.append(ticket_data)
+        if request.user.user_type == 'Landlord':
+            tickets = Ticket.objects.all()
+        elif request.user.user_type == 'Tenant':
+            tickets = Ticket.objects.filter(unit__tenant=request.user)
+        serializer = TicketSerializer(tickets, many=True)
         return Response({
-            "response_data": data
+            "data": serializer.data,
+            "isSuccess": True
         }, status=status.HTTP_200_OK)
     
 # View a specific ticket's info
@@ -94,7 +83,43 @@ class TicketDetailsView(APIView):
 class TicketUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, ticket_id):
+    def put(self, request, ticket_id):
+        try:
+            ticket = Ticket.objects.get(id=ticket_id)
+        except Ticket.DoesNotExist:
+            return Response({
+                'msg': 'Ticket not found',
+                'isSuccess': False
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.user_type == 'Landlord':
+            allowed_fields = ['category', 'status', 'cost']
+        elif request.user.user_type == 'Tenant':
+            allowed_fields = ['subject', 'category']
+        else:
+            return Response({
+                'msg': 'User type not authorized to update the ticket',
+                'isSuccess': False
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Filter request data to include only allowed fields
+        data = {key: value for key, value in request.data.items() if key in allowed_fields}
+
+        serializer = TicketSerializer(instance=ticket, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "msg": "Ticket updated successfully",
+                "data": serializer.data,
+                "isSuccess": True
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# delete a specific ticket
+class DeleteTicketView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, ticket_id):
         try:
             ticket = Ticket.objects.get(id=ticket_id)
         except Ticket.DoesNotExist:
@@ -103,49 +128,8 @@ class TicketUpdateView(APIView):
                 'isSuccess': False
             }, status=status.HTTP_404_NOT_FOUND)
         
-        if request.user.user_type == 'Landlord':
-            allowed_fields = ['category', 'status']
-            # data = {key: value for key, value in request.data.items() if key in allowed_fields}
-        elif request.user.user_type == 'Tenant':
-            allowed_fields = ['subject']
-            # data = {key: value for key, value in request.data.items() if key in allowed_fields}
-
-        data = {key: value for key, value in request.data.items() if key in allowed_fields}
-
-        serializer = TicketSerializer(instance=ticket, data=data, partial=True)
-        if serializer.is_valid():
-            old_status = ticket.status
-            updated_ticket = serializer.save()
-            
-            if old_status != 'Open' and updated_ticket.status == 'Open' and request.user.user_type == 'Landlord':
-                pass
-            return Response({
-                "msg": "Update Successful",
-                "data": serializer.data,
-                "isSuccess": True
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-# delete a specific ticket
-class DeleteTicketView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def delete(self, request, ticket_id):
-        if request.user.user_type != 'Landlord':
-            return Response({
-                'msg': 'User does not have the correct role to delete a ticket.',
-                'isSuccess': False
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        try:
-            ticket = Ticket.objects.get(ticket_id=ticket_id)
-            ticket.delete()
-            return Response({
-                "msg": "Ticket Deleted Successfully",
-                "isSuccess": True
-            }, status=200)
-        except Ticket.DoesNotExist:
-            return Response({
-                'msg': 'Ticket not found',
-                'isSuccess': False
-            }, status=status.HTTP_400_BAD_REQUEST)
+        ticket.delete()
+        return Response({
+            'msg': 'Ticket deleted successfully',
+            'isSuccess': True
+        }, status=status.HTTP_200_OK)
