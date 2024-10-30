@@ -13,9 +13,10 @@ class Ticket(models.Model):
     ]
 
     TICKET_STATUS = [
-        ('RESOLVED', 'Resolved'),
-        ('PROCESSING', 'In Process'),
-        ('DECLINED', 'Declined'),
+        ('OPEN', 'Open'), # Ticket has been created but not yet assigned
+        ('RESOLVED', 'Resolved'), # Ticket has been resolved
+        ('PROCESSING', 'In Process'), # Ticket has been assigned and is being worked on
+        ('DECLINED', 'Declined'), # Ticket has been declined
     ]
 
 
@@ -23,7 +24,7 @@ class Ticket(models.Model):
     unit = models.ForeignKey(HouseUnit, on_delete=models.CASCADE) 
     # assign = models.CharField(max_length=50)
     category = models.CharField(max_length=100, choices=TICKET_CATEGORY)
-    status = models.CharField(max_length=100, choices=TICKET_STATUS, default=TicketStatus.PROCESSING)
+    status = models.CharField(max_length=100, choices=TicketStatus, default=TicketStatus.OPEN)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     #assigning cost to the model
