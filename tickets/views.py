@@ -40,7 +40,6 @@ class CreateTickets(APIView):
             ticket = serializer.save()
             return Response({
                 "msg": "Ticket added successfully",
-                "id": ticket.pk,
                 "data": serializer.data,
                 'isSuccess': True
             }, status=status.HTTP_201_CREATED)
@@ -51,9 +50,9 @@ class TicketsListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         if request.user.user_type == 'Landlord':
-            tickets = Ticket.objects.all()
+            tickets = Ticket.objects.filter(unit__house__owner=request.user).order_by('-updated_at', '-created_at')
         elif request.user.user_type == 'Tenant':
-            tickets = Ticket.objects.filter(unit__tenant=request.user)
+            tickets = Ticket.objects.filter(unit__occupant=request.user).order_by('-updated_at', '-created_at')
         serializer = TicketSerializer(tickets, many=True)
         return Response({
             "data": serializer.data,
@@ -74,7 +73,6 @@ class TicketDetailsView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
         serializer = TicketSerializer(ticket, many=False)
         return Response({
-            "id": ticket.id,
             "data": serializer.data,
             "isSuccess": True
         }, status=status.HTTP_200_OK)

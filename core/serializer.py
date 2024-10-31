@@ -48,10 +48,10 @@ class HouseUnitSerializer(serializers.ModelSerializer):
         fields = ['id', 'house_id', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner']
 
     def get_name_of_owner(self, object):
-        return str(object.house.owner.email)
+        return str(object.house.owner.email) if object.house else None
     
     def get_house_id(self, object):
-        return str(object.house.id)
+        return str(object.house.id) if object.house else None
     
     # def get_no_of_house_units(self, object):
     #     return object.units[:]
