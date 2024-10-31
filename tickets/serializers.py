@@ -10,7 +10,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ["subject", "unit", "category", "created_at", "updated_at", "status", "cost"]
+        fields = ["subject", "unit", "category", "created_at", "updated_at", "status", "cost", "id"]
 
     def create(self, validated_data):
         unit = self.context.get('unit')

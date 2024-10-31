@@ -187,7 +187,7 @@ class CreateHouseUnit(APIView):
             if house.owner==user:
                 serializer = HouseUnitSerializer(data=request.data)
                 if serializer.is_valid():
-                    serializer.save()
+                    serializer.save(house=house)
                     print('serial', serializer.data)
                     return Response({'message': 'Your house units details has been added',
                                     'house details': serializer.data},
