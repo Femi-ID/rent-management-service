@@ -14,4 +14,5 @@ urlpatterns = [
     path('<str:house_id>/', views.HouseDetailView.as_view(), name='house-detail'),
     path('house-unit/<str:house_unit_id>/', views.HouseUnitDetailView.as_view(), name='house-unit-detail'),
     path('lease/<str:house_unit_id>/', views.LeaseAgreementView.as_view(), name='lease-agreement'),
+    path('<str:landlord_id>/tenant-list/', views.ListTenantsView.as_view(), name='list-tenants'),
 ]

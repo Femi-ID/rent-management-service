@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
@@ -86,6 +87,10 @@ class User(AbstractUser, PermissionsMixin):
 class OnboardUser(models.Model):
     email = models.EmailField(max_length=250, unique=True)
     house_unit = models.OneToOneField(HouseUnit, related_name='onboard_tenant', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='onboard_users', on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.email
     
     # objects = models.Manager()
 
