@@ -442,3 +442,18 @@ class LeaseAgreementView(APIView):
             return Response({'message': 'Authentication required to delete house'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
+# view all tenants under a landlord
+class ListTenantsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, landlord_id):
+        user = request.user
+        if user.user_type == 'Landlord':
+            tenants = OnBoard.objects.filter(house_unit__house__owner=user)
+            serializer = OnboardUserSerializer(tenants, many=True)
+            return Response({
+                "data": serializer.data,
+                "isSuccess": True
+            }, status=status.HTTP_200_OK)
+        return Response({'message': 'Authentication required to view tenants'},
+                        status=status.HTTP_401_UNAUTHORIZED)

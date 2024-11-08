@@ -25,6 +25,14 @@ class CreateTickets(APIView):
                 'isSuccess': False
             }, status=status.HTTP_404_NOT_FOUND)
         
+        # Check if the unit is occupied by the user creating the ticket
+        if unit.occupant != request.user:
+            return Response({
+                'msg': 'Unit does not belong to the user',
+                'isSuccess': False
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Check if a ticket with the same subject already exists
         ticket_exists = Ticket.objects.filter(subject=request.data['subject'], unit= pk).exists()
         if ticket_exists:
             return Response({

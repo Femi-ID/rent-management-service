@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import House, HouseUnit, LeaseAgreement
 from users.models import OnboardUser
 import json
+from users.serializers import UserSerializer
 
 class HouseSerializer(serializers.ModelSerializer):
     name_of_owner = serializers.SerializerMethodField()
@@ -58,13 +59,15 @@ class HouseUnitSerializer(serializers.ModelSerializer):
 
 
 class OnboardUserSerializer(serializers.ModelSerializer):
-    # house_address = serializers.SerializerMethodField()
+    house_address = serializers.SerializerMethodField()
+    user_details = UserSerializer(read_only=True, source='user')
+
     class Meta:
         model = OnboardUser
-        fields = ['email', 'house_unit']
+        fields = ['email', 'house_unit', 'house_address', 'user_details']
 
-    # def get_house_address(self, object):
-    #     return object.house.address
+    def get_house_address(self, object):
+        return object.house_unit.house.address
 
 class LeaseAgreementSerializer(serializers.ModelSerializer):
     document = serializers.FileField()
