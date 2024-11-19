@@ -26,12 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY')
 # SECRET_KEY = os.environ.get('SECRET_KEY')
-SECRET_KEY = os.getenv('SECRET_KEY')
+# SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG')
+# DEBUG = os.getenv('DEBUG')
+DEBUG = True
 
 # ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
 ALLOWED_HOSTS = ['*']
@@ -66,6 +67,8 @@ INSTALLED_APPS = [
     'rest_framework_swagger',   # Swagger
     'drf_yasg',    # Another Swagger generator
     # 'debug_toolbar',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -116,9 +119,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get('DATABASE_URL')
+# database_url = os.environ.get('DATABASE_URL')
 # THIS DATABASE IS FOR DEVELOPMENT ONLY, NOT TESTING
-DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
+# DATABASES['default'] = dj_database_url.parse('postgresql://rent-db_owner:CPO5XRguS8ED@ep-royal-sun-a2hm7uj9.eu-central-1.aws.neon.tech/rent-db?sslmode=require')
 
 # THE DATABASE YOU ARE TO WORK WITH WHEN TESTING:
 # DATABASES = {
@@ -226,16 +229,27 @@ SITE_NAME = 'RENT PADII'
 DOMAIN = 'rent-man.vercel.app' # (change to frontend localhost) the ACTIVATION_URL will be appended to this domain
 
 # Email config
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
-EMAIL_HOST = os.getenv('EMAIL_HOST')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_PORT = os.getenv('EMAIL_PORT')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
-DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
+# EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+# EMAIL_HOST = os.getenv('EMAIL_HOST')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_PORT = os.getenv('EMAIL_PORT')
+# EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+# DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
-PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
-PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY")
+# PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
+# PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY")
+
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
 
 
 SWAGGER_SETTINGS = {
@@ -269,7 +283,21 @@ CACHES = {
     # }
 }
 
-REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
-REDIS_PORT = os.getenv('REDIS_PORT')
-REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+# REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
+# REDIS_PORT = os.getenv('REDIS_PORT')
+# REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+
+REDIS_CLIENT_HOST = config('REDIS_CLIENT_HOST')
+REDIS_PORT = config('REDIS_PORT')
+REDIS_PASSWORD = config('REDIS_PASSWORD')
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name = config('CLOUD_NAME'),
+    api_key = config('API_KEY'),
+    api_secret = config('API_SECRET')
+)
 #************ ****************** ****************** ***************** *************
