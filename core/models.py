@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from users.models import User
 from django.conf import settings
+from cloudinary.models import CloudinaryField
 
 class House(models.Model):
     # id = models.UUIDField(default=uuid.uuid4, help_text="To reference the house object when called.")
@@ -11,7 +12,7 @@ class House(models.Model):
     city = models.CharField(max_length=50, blank=False)
     state = models.CharField(max_length=50, blank=False)
     reg_license = models.CharField(max_length=100, blank=False)
-    # image = models.ImageField()
+    house_image = CloudinaryField('house_image', null=True, blank=True)
     number_of_units = models.PositiveIntegerField()
     # number_of_units = models.PositiveIntegerField(default=1)
 
@@ -21,7 +22,7 @@ class House(models.Model):
 
 class HouseUnit(models.Model):
     # id = models.BigAutoField(primary_key=True)
-    # unit_image = models.ImageField(upload_to='files/unit_images/', null=True, blank=True)
+    unit_image = CloudinaryField('unit_image', null=True, blank=True)
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name="units", null=True, blank=True)
     unit_number = models.CharField(max_length=10, unique=True)
     unit_type = models.CharField(max_length=50, null=True, blank=True)
