@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
+# DEBUG = True
 
 # ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
 ALLOWED_HOSTS = ['*']
@@ -66,6 +67,8 @@ INSTALLED_APPS = [
     'rest_framework_swagger',   # Swagger
     'drf_yasg',    # Another Swagger generator
     # 'debug_toolbar',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -237,6 +240,17 @@ DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY")
 
+# EMAIL_BACKEND = config('EMAIL_BACKEND')
+# EMAIL_HOST = config('EMAIL_HOST')
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+# EMAIL_PORT = config('EMAIL_PORT')
+# EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+# DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+
+# PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
+# PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
+
 
 SWAGGER_SETTINGS = {
    'SECURITY_DEFINITIONS': {
@@ -272,4 +286,22 @@ CACHES = {
 REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+
+# REDIS_CLIENT_HOST = config('REDIS_CLIENT_HOST')
+# REDIS_PORT = config('REDIS_PORT')
+# REDIS_PASSWORD = config('REDIS_PASSWORD')
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name = os.getenv('CLOUD_NAME'),
+    api_key = os.getenv('API_KEY'),
+    api_secret = os.getenv('API_SECRET')
+    
+    # cloud_name = config('CLOUD_NAME'),
+    # api_key = config('API_KEY'),
+    # api_secret = config('API_SECRET')
+)
 #************ ****************** ****************** ***************** *************

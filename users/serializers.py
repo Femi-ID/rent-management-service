@@ -11,7 +11,7 @@ class UserSerializer(BaseUserSerializer):
         fields = [
             'id', 'is_active',
             'first_name', 'middle_name', 'last_name', 'username', 
-            'email', 'phone_number', 'user_type', 'house_address'
+            'email', 'phone_number', 'user_type', 'house_address', 'user_image'
         ]
 
 
@@ -20,5 +20,5 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         fields = [
             'first_name', 'middle_name', 'last_name', 'username', 
             'email', 'password', 'phone_number', 
-            'date_of_birth', 'user_type', 'house_address'
+            'date_of_birth', 'user_type', 'house_address', 'user_image'
         ]
