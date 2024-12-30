@@ -47,6 +47,16 @@ def create_receipt_for_payment(sender, instance, created, *args, **kwargs):
         )
         receipt_obj.save()
         print('receipt:::', receipt_obj)
+
+        # send_email_with_pdf_image_attachment(reference=reference,
+        #                                      amount=int(instance.amount/100),
+        #                                      status=receipt.status,
+        #                                      channel=receipt.channel, 
+        #                                      bank=receipt.bank,
+        #                                      card_type=receipt.card_type,
+        #                                      last4_card_digits=receipt.last4_card_digits,
+        #                                      transaction_id=receipt.transaction_id,
+        #                                      transaction_date=receipt.transaction_date)
     else: 
         # payment object-instance is being updated
         print('Receipt is being updated not created.')
@@ -79,16 +89,16 @@ def create_receipt_for_payment(sender, instance, created, *args, **kwargs):
         else:
             print('No transaction has occured for this payment. It has only been initialized.')
         
-    send_email_with_pdf_image_attachment(reference=reference, 
-                                         amount=int(instance.amount/100), 
-                                         status=receipt.status, 
-                                         channel=receipt.channel, 
-                                         bank=receipt.bank, 
-                                         card_type=receipt.card_type, 
-                                         last4_card_digits=receipt.last4_card_digits, 
-                                         transaction_id=receipt.transaction_id,
-                                         customer_code=receipt.customer_code, 
-                                         transaction_date=receipt.transaction_date)
+    # send_email_with_pdf_image_attachment(reference=reference, 
+    #                                      amount=int(instance.amount/100), 
+    #                                      status=receipt.status, 
+    #                                      channel=receipt.channel, 
+    #                                      bank=receipt.bank, 
+    #                                      card_type=receipt.card_type, 
+    #                                      last4_card_digits=receipt.last4_card_digits, 
+    #                                      transaction_id=receipt.transaction_id,
+    #                                      customer_code=receipt.customer_code, 
+    #                                      transaction_date=receipt.transaction_date)
 
             # if paystack_response_jsonify['data']['status'] == 'abandoned':
             #     receipt.channel=paystack_response_jsonify['data']['channel'] or ''

@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from core.models import HouseUnit, House, LeaseAgreement
-from .serializer import HouseSerializer, HouseUnitSerializer, OnboardUserSerializer, LeaseAgreementSerializer
+from .serializer import HouseSerializer, HouseUnitSerializer, OnboardUserSerializer, LeaseAgreementSerializer, HouseUpdateSerializer, CreateHouseUnitSerializer
 from users.models import OnboardUser as OnBoard
 import json, redis
 from users.models import User
@@ -13,7 +13,10 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import timedelta
 from django.conf import settings
-
+from adrf.views import APIView as AsyncAPIView
+from asgiref.sync import sync_to_async
+from rest_framework.parsers import JSONParser
+import asyncio
 
 # redis_client = redis.Redis(host='localhost', port=6379, db=0)
 redis_client = redis.Redis(
@@ -21,7 +24,8 @@ redis_client = redis.Redis(
   port=settings.REDIS_PORT,
   password=settings.REDIS_PASSWORD)
 
-class CreateHouse(APIView):
+        
+class CreateHouse(AsyncAPIView):
     permission_classes = [permissions.IsAuthenticated]
     @swagger_auto_schema(
         operation_description="Add a house to the application. POST /houses/create-house/",
@@ -57,7 +61,7 @@ class CreateHouse(APIView):
         return Response({'message':'Only landlords can create houses.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-class ListHouses(APIView):
+class ListHouses(AsyncAPIView):
     permission_classes = [permissions.IsAuthenticated]
     """View to list the house and number of house_units belonging to the landlord."""
     @swagger_auto_schema(
@@ -77,7 +81,7 @@ class ListHouses(APIView):
             401: openapi.Response(description="Only landlords can access this view."),
         }
     )
-    def get(self, request, owner_id):
+    async def get(self, request, owner_id):
         user = request.user
         if user.user_type == 'Landlord':
             houses = redis_client.get(f'house-list-{user.id}')
@@ -88,7 +92,7 @@ class ListHouses(APIView):
             
                 serializer = HouseSerializer(houses, many=True)
                 redis_client.set(f'house-list-{user.id}', json.dumps(serializer.data))
-                redis_client.expire(f'house-list-{user.id}', timedelta(hours=2))
+                redis_client.expire(f'house-list-{user.id}', timedelta(seconds=10))
                 print("data loaded from DB")
                 return Response({'message': 'The list of houses you added:','house details': serializer.data},status=status.HTTP_200_OK)
             else:
@@ -128,7 +132,7 @@ class ListHouseUnits(APIView):
     def get(self, request, owner_id, house_id):
         user = request.user
         if user.user_type == 'Landlord':
-            house_units = redis_client.get(f'house-units-{house_id}')
+            house_units = redis_client.get(f'house-units-{house_id}-owner-{owner_id}')
             if not house_units:
                 house_units = HouseUnit.objects.filter(house__id=house_id, house__owner=owner_id).all()
                 if house_units:
@@ -318,17 +322,70 @@ class TenantDashboard(APIView):
         print("data loaded from redis cache")
         return Response({'message': 'List of rented-units from redis cache:','house details': json_house_units},status=status.HTTP_200_OK)
         
+
+def update_redis_landlord_house_list(owner_id, house):
+    """Update a specific house object in the Redis list for the given user."""
+    try:
+        print('house::', house.id)
+        db_houses = House.objects.filter(owner=owner_id).prefetch_related('units')
+        serializer = HouseUpdateSerializer(db_houses, many=True)
+        cached_houses = redis_client.get(f'house-list-{owner_id}')
+        if cached_houses is None: 
+            redis_client.set(f'house-list-{owner_id}', json.dumps(serializer.data))
+            redis_client.expire(f'house-list-{owner_id}', timedelta(weeks=2))
+        else:
+            redis_jsonified = json.loads(cached_houses)
+            print('redis jsonified', redis_jsonified[0])
+            for redis_house in redis_jsonified:
+                if redis_house["id"] == house.id:
+            # updated_house = [house[house.id] for house in redis_jsonified]
+                    redis_house["address"] = house.address
+                    redis_house["city"] = house.city  # Update fields as needed
+                    redis_house["state"] = house.state
+                    redis_house['no_of_house_units'] = house.units.count()
+                    break
+            redis_client.set(f'house-list-{owner_id}', f'{json.dumps(serializer.data)}')
+            redis_client.expire(f'house-list-{owner_id}', timedelta(weeks=2))
+
+            redis_houses = redis_client.get(f'house-list-{owner_id}')
+            redis_jsonified = json.loads(redis_houses)
+            print(f"data loaded from redis cache and updated house with ID {house.id} in Redis for user {owner_id}")
+    except Exception as e:
+        print(f"Error updating house in Redis for user {owner_id}: {e}")
         
 class HouseDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     # method to get a house detail
     def get(self, request, house_id):
-        house = get_object_or_404(House, id=house_id)
-        serializer = HouseSerializer(house)
-        return Response({'message': 'The house details you requested',
-                        'house details': serializer.data},
-                        status=status.HTTP_200_OK)
+        user=request.user
+        try:
+            cached_houses = redis_client.get(f'house-list-{user.id}')
+            if not cached_houses:
+                # fetch from the db
+                house = get_object_or_404(House, id=house_id)
+                serializer = HouseSerializer(house)
+                # redis_client.set(f'house-list-{user.id}', json.dumps(serializer.data))
+                # redis_client.expire(f'house-list-{user.id}', timedelta(seconds=10))
+                return Response({'message': 'The house details you requested',
+                                'house details': serializer.data},
+                                status=status.HTTP_200_OK)
+            else:
+                json_houses = json.loads(cached_houses)
+                for house in json_houses:
+                    if house['id'] == house_id:
+                        cached_house = house
+                        print("data loaded from redis cache")
+                        return Response({'message': 'The house detail requested from redis cache:',
+                                    'house details': cached_house},
+                                    status=status.HTTP_200_OK)
+                return Response({'message': 'House detail not found in redis cache:',
+                                    'house details': None},
+                                    status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message': 'Unable to retrieve the requested house details',
+                             'error': f'{e}'},
+                             status=status.HTTP_501_NOT_IMPLEMENTED)
 
     # create a method to update a house
     def put(self, request, house_id):
@@ -336,13 +393,18 @@ class HouseDetailView(APIView):
         if user.user_type == 'Landlord':
             try:
                 house = get_object_or_404(House, id=house_id)
-                serializer = HouseSerializer(instance=house, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response({'message': 'The house details has been updated', 
-                    'house details': serializer.data},
-                    status=status.HTTP_200_OK)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if house.owner == user:
+                    serializer = HouseUpdateSerializer(instance=house, data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        update_redis_landlord_house_list(owner_id=user.id, house=house)
+                        return Response({'message': 'The house details has been updated', 
+                        'house details': serializer.data},
+                        status=status.HTTP_200_OK)
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response({'message': 'Only the house owner can change the info about this house.'},
+                                    status=status.HTTP_403_FORBIDDEN)
             except Exception as e:
                 return Response({'message': 'Your house details could not be added',
                                  'error': f'{e}'}, 
@@ -356,52 +418,117 @@ class HouseDetailView(APIView):
         user = request.user
         if user.user_type == 'Landlord':
             house = get_object_or_404(House, id=house_id)
-            house.delete()
-            return Response({'message': 'The house has been deleted'},
-                            status=status.HTTP_200_OK)
+            if house.owner == user:
+                house.delete()
+                return Response({'message': 'The house has been deleted'},
+                                status=status.HTTP_200_OK)
+            else:
+                    return Response({'message': 'Only the house owner can delete this house.'},
+                                    status=status.HTTP_403_FORBIDDEN)
         else:
             return Response({'message': 'Authentication required to delete house'},
                             status=status.HTTP_401_UNAUTHORIZED)
+
+
+def update_redis_landlord_house_units(owner_id, house_id, house_unit):
+    """Update a specific house unit object in the Redis list for the given user."""
+    try:
+        db_house_units = HouseUnit.objects.filter(house__id=house_id, house__owner=owner_id).all()
+        serializer = HouseUnitSerializer(db_house_units, many=True)
+        cached_houses = redis_client.get(f'house-units-{house_id}-owner-{owner_id}')
+        if cached_houses is None: 
+            redis_client.set(f'house-units-{house_id}-owner-{owner_id}', json.dumps(serializer.data))
+            redis_client.expire(f'house-units-{house_id}-owner-{owner_id}', timedelta(weeks=2))
+        else:
+            redis_jsonified = json.loads(cached_houses)
+            for redis_house_unit in redis_jsonified:
+                if redis_house_unit['id'] == house_unit.id:
+                    redis_house_unit["unit_number"] = house_unit.unit_number
+                    redis_house_unit["unit_type"] = house_unit.unit_type  # Update fields as needed
+                    redis_house_unit["description"] = house_unit.description
+                    redis_house_unit['rent_price'] = house_unit.rent_price
+                    redis_house_unit['availability'] = house_unit.availability
+            # redis_client.delete(f'house-units-{house_id}-owner-{owner_id}')
+            redis_client.set(f'house-units-{house_id}-owner-{owner_id}', f'{json.dumps(serializer.data)}')
+            redis_client.expire(f'house-units-{house_id}-owner-{owner_id}', timedelta(weeks=2))
+
+            redis_houses = redis_client.get(f'house-units-{house_id}-owner-{owner_id}')
+            redis_jsonified = json.loads(redis_houses)
+            print(f"Updated house_unit with ID {house_unit.id} in Redis for user {owner_id}")
+    except Exception as e:
+        print(f"Error updating house in Redis for user {owner_id}: {e}")
 
 
 class HouseUnitDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     # method to get a house unit
-    def get(self, request, house_unit_id):
-        house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
-        serializer = HouseUnitSerializer(house_unit)
-        return Response({'message': 'The Unit details you requested',
-                        'house details': serializer.data},
-                        status=status.HTTP_200_OK)
-
-    # method to update a house unit
-    def put(self, request, house_unit_id):
-        user = request.user
-        if user.user_type == 'Landlord':
-            house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
-            serializer = HouseUnitSerializer(instance=house_unit, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({'message': 'The Unit details has been updated',
+    def get(self, request, house_unit_id, house_id):
+        user=request.user
+        try:
+            cached_house_units = redis_client.get(f'house-units-{house_id}-owner-{user.id}')
+            if not cached_house_units:
+                house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
+                serializer = HouseUnitSerializer(house_unit)
+                return Response({'message': 'The Unit details you requested',
                                 'house details': serializer.data},
                                 status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                json_house = json.loads(cached_house_units)
+                for house_unit in json_house:
+                    if house_unit['id'] == house_unit_id:
+                        cached_house_unit  = house_unit
+                        print("data loaded from redis cache db.")
+                        return Response({'message': 'The house detail requested from redis cache:',
+                                         'house details': cached_house_unit},
+                                         status=status.HTTP_200_OK)
+                    return Response({'message': 'House-unit detail not found in redis cache:'},
+                                    status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error retrieving house-unit detail: {e}")
+
+    # method to update a house unit
+    def put(self, request, house_unit_id, house_id):
+        user = request.user
+        if user.user_type == 'Landlord':
+            try:
+                house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
+                serializer = HouseUnitSerializer(instance=house_unit, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    update_redis_landlord_house_units(
+                        owner_id=user.id, 
+                        house_id=house_id, 
+                        house_unit=house_unit)
+                    return Response({'message': 'The Unit details has been updated',
+                                    'house details': serializer.data},
+                                    status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'message': 'Your house details could not be updated',
+                                 'error': f'{e}'}, 
+                                 status=status.HTTP_501_NOT_IMPLEMENTED)
         else:
             return Response({'message': 'Authentication required to update Unit details'},
                             status=status.HTTP_401_UNAUTHORIZED)
         
     # method to delete a house unit
-    def delete(self, request, house_unit_id):
+    def delete(self, request, house_unit_id, house_id):
         user = request.user
-        if user.user_type == 'Landlord':
-            house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
-            house_unit.delete()
-            return Response({'message': 'The Unit has been deleted'},
-                            status=status.HTTP_200_OK)
-        else:
-            return Response({'message': 'Authentication required to delete house'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            if user.user_type == 'Landlord':
+                house_unit = get_object_or_404(HouseUnit, id=house_unit_id)
+                if house_unit.house.owner == user:
+                    house_unit.delete()
+                    return Response({'message': 'The Unit has been deleted'},
+                                    status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'Only the house owner (landlord) required to delete house'},
+                                status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+                return Response({'message': 'House unit could not be deleted.',
+                                 'error': f'{e}'}, 
+                                 status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 class LeaseAgreementView(APIView):
@@ -459,3 +586,4 @@ class ListTenantsView(APIView):
             }, status=status.HTTP_200_OK)
         return Response({'message': 'Authentication required to view tenants'},
                         status=status.HTTP_401_UNAUTHORIZED)
+

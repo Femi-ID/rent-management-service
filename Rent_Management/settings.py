@@ -29,13 +29,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = config('SECRET_KEY')
 # SECRET_KEY = os.environ.get('SECRET_KEY')
 SECRET_KEY = os.getenv('SECRET_KEY')
+# SECRET_KEY = "UONSoasinINEVISVFSNVML"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
 # DEBUG = True
 
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
+# ALLOWED_HOSTS = ['*']
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -62,14 +63,20 @@ INSTALLED_APPS = [
 
     # added dependencies
     'rest_framework',
+    "rest_framework.authtoken",
+    # "rest_framework.simplejwt",
+    # 'rest_framework_simplejwt.token_blacklist',
     'djoser',
     'corsheaders',
     'rest_framework_swagger',   # Swagger
     'drf_yasg',    # Another Swagger generator
+    'adrf',
     # 'debug_toolbar',
     'cloudinary_storage',
     'cloudinary',
 ]
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -187,7 +194,9 @@ CORS_ALLOW_ALL_ORIGINS = True  # CHANGE THIS DURING PRODUCTION
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # "rest_framework.authentication.SessionAuthentication",
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # "api.authentication.TokenAuthentication",
     ),
 
     'DEFAULT_PERMISSION_CLASSES': (
@@ -287,6 +296,7 @@ REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 
+#************ ****************** ****************** ***************** *************
 # REDIS_CLIENT_HOST = config('REDIS_CLIENT_HOST')
 # REDIS_PORT = config('REDIS_PORT')
 # REDIS_PASSWORD = config('REDIS_PASSWORD')
@@ -305,3 +315,4 @@ cloudinary.config(
     # api_secret = config('API_SECRET')
 )
 #************ ****************** ****************** ***************** *************
+
