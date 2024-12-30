@@ -9,10 +9,10 @@ from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from django.conf import settings
 from adrf.decorators import api_view as adrf_api_view
-from celery import shared_task
 from .serializer import HouseSerializer, HouseUnitSerializer
 from datetime import timedelta
-import array as arr
+# from celery import shared_task
+# import array as arr
 
 redis_client = redis.Redis(
   host=settings.REDIS_CLIENT_HOST,
