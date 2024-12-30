@@ -29,13 +29,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = config('SECRET_KEY')
 # SECRET_KEY = os.environ.get('SECRET_KEY')
 SECRET_KEY = os.getenv('SECRET_KEY')
-SECRET_KEY = "UONSoasinINEVISVFSNVML"
+# SECRET_KEY = "UONSoasinINEVISVFSNVML"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
 
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(",")
+# ALLOWED_HOSTS = ['*']
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -282,7 +282,6 @@ REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 #************ ****************** ****************** ***************** *************
-# REDIS_CLIENT_HOST='redis-12278.c85.us-east-1-2.ec2.redns.redis-cloud.com'
-REDIS_CLIENT_HOST='redis-15113.c80.us-east-1-2.ec2.redns.redis-cloud.com'
-REDIS_PORT=15113
-REDIS_PASSWORD='FX7HSpTlEmHo5Lcns6G1W3orUPWh4Lne'
+# REDIS_CLIENT_HOST='redis-15113.c80.us-east-1-2.ec2.redns.redis-cloud.com'
+# REDIS_PORT=15113
+# REDIS_PASSWORD='FX7HSpTlEmHo5Lcns6G1W3orUPWh4Lne'
