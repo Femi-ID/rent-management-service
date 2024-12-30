@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import House, HouseUnit, LeaseAgreement
 from users.models import OnboardUser
 import json
+from users.serializers import UserSerializer
 
 class HouseSerializer(serializers.ModelSerializer):
     name_of_owner = serializers.SerializerMethodField()
@@ -9,7 +10,7 @@ class HouseSerializer(serializers.ModelSerializer):
     no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = House
-        fields = ['id', 'address', 'name_of_owner', 'city','state', 'number_of_units', 'reg_license', 'no_of_house_units']
+        fields = ['id', 'address', 'name_of_owner', 'city','state', 'number_of_units', 'reg_license', 'no_of_house_units', 'house_image']
 
     def get_name_of_owner(self, object):
         return object.owner.email
@@ -73,7 +74,7 @@ class HouseUnitSerializer(serializers.ModelSerializer):
     # no_of_house_units = serializers.SerializerMethodField()
     class Meta:
         model = HouseUnit
-        fields = ['id', 'house_id', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner']
+        fields = ['id', 'house_id', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner', 'unit_image']
 
     def get_name_of_owner(self, object):
         return str(object.house.owner.email) if object.house.owner else None
@@ -99,13 +100,15 @@ class HouseUnitUpdateSerializer(serializers.ModelSerializer):
     def get_house_id(self, object):
         return str(object.house.id) if object.house else None
 class OnboardUserSerializer(serializers.ModelSerializer):
-    # house_address = serializers.SerializerMethodField()
+    house_address = serializers.SerializerMethodField()
+    user_details = UserSerializer(read_only=True, source='user')
+
     class Meta:
         model = OnboardUser
-        fields = ['email', 'house_unit']
+        fields = ['email', 'house_unit', 'house_address', 'user_details']
 
-    # def get_house_address(self, object):
-    #     return object.house.address
+    def get_house_address(self, object):
+        return object.house_unit.house.address
 
 class LeaseAgreementSerializer(serializers.ModelSerializer):
     document = serializers.FileField()

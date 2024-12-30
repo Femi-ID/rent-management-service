@@ -263,8 +263,8 @@ class OnboardUser(APIView):
     def post(self, request):
         """On board a new user to a house unit."""
         email = request.data.get('email')
-        if User.objects.filter(email=email).first():
-            return Response({'message': "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+        # if User.objects.filter(email=email).first():
+        #     return Response({'message': "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             house_unit_id = request.GET.get('house_unit_id')
             print('unit id', house_unit_id)
@@ -272,11 +272,13 @@ class OnboardUser(APIView):
                 return Response({"error": "The house house unit must be passed as a query parameter in the url."},
                                 status=status.HTTP_400_BAD_REQUEST)
             house_unit = HouseUnit.objects.filter(id=house_unit_id, house__owner=request.user, availability=True).first()
-            old_user = OnBoard.objects.filter(email=email)
+            old_user = OnBoard.objects.filter(email=email, house_unit=house_unit).first()
             print('house unit', house_unit)
             print('old user', old_user)
             if house_unit and not old_user:
-                serializer = OnboardUserSerializer(data=request.data)
+                request_data = request.data.copy()
+                request_data['house_unit'] = house_unit.id
+                serializer = OnboardUserSerializer(data=request_data)
                 if serializer.is_valid():
                     serializer.save()
                     print('serial', serializer.data)
@@ -568,3 +570,20 @@ class LeaseAgreementView(APIView):
         else:
             return Response({'message': 'Authentication required to delete house'},
                             status=status.HTTP_401_UNAUTHORIZED)
+
+# view all tenants under a landlord
+class ListTenantsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, landlord_id):
+        user = request.user
+        if user.user_type == 'Landlord':
+            tenants = OnBoard.objects.filter(house_unit__house__owner=user)
+            serializer = OnboardUserSerializer(tenants, many=True)
+            return Response({
+                "data": serializer.data,
+                "isSuccess": True
+            }, status=status.HTTP_200_OK)
+        return Response({'message': 'Authentication required to view tenants'},
+                        status=status.HTTP_401_UNAUTHORIZED)
+

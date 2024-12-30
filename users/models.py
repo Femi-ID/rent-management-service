@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
@@ -5,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from .enums import UserType
 import uuid
 from core.models import HouseUnit
+from cloudinary.models import CloudinaryField
 
 
 class CustomUserManager(BaseUserManager):
@@ -70,6 +72,7 @@ class User(AbstractUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     house_address  = models.CharField(max_length=300, null=True, blank=True)
+    user_image = CloudinaryField('user_image', null=True, blank=True)
     # create UserManager object to use this custom model.
     objects = CustomUserManager()
 
@@ -84,8 +87,12 @@ class User(AbstractUser, PermissionsMixin):
 
 
 class OnboardUser(models.Model):
-    email = models.EmailField(max_length=250, unique=True)
-    house_unit = models.OneToOneField(HouseUnit, related_name='onboard_tenant', on_delete=models.DO_NOTHING)
+    email = models.EmailField(max_length=250, unique=False)
+    house_unit = models.OneToOneField(HouseUnit, related_name='onboard_tenant', on_delete=models.DO_NOTHING, null=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='onboard_users', on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.email
     
     # objects = models.Manager()
 

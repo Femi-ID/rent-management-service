@@ -39,3 +39,5 @@ typing_extensions
 tzdata
 urllib3
 whitenoise
+cloudinary
+django-cloudinary-storage
