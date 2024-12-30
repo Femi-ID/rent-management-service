@@ -8,3 +8,7 @@ backup.json
 /__pycache__/**
 payments/redis-doc.txt
 payments/utils.py
+junk.txt
+core/celery.py
+core/tempCodeRunnerFile.py
+new-env/

@@ -36,10 +36,56 @@ class HouseSerializer(serializers.ModelSerializer):
     #     json_obj = json.loads(json_object)
     #     return json_obj
     
+
+class HouseUpdateSerializer(serializers.ModelSerializer):
+    name_of_owner = serializers.SerializerMethodField()
+    no_of_house_units = serializers.SerializerMethodField()
+    class Meta:
+        model = House
+        fields = ['id', 'address', 'name_of_owner', 'city','state', 'no_of_house_units']
+
+    def get_name_of_owner(self, object):
+        return object.owner.email
+
+    def get_no_of_house_units(self, object):
+        return object.units.count()
+    
+    def __init__(self, *args, **kwargs):
+        # Extract the additional 'owner' argument
+        self.owner = kwargs.pop('owner', None)
+        super().__init__(*args, **kwargs)
+
+    # def create(self, validated_data):
+    #     # Ensure the owner is set when creating the house
+    #     validated_data['owner'] = self.owner
+    #     return super().create(validated_data)
     
 
+class CreateHouseUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HouseUnit
+        fields = ['id', 'house', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability']
+    
 
 class HouseUnitSerializer(serializers.ModelSerializer):
+    name_of_owner = serializers.SerializerMethodField()
+    house_id = serializers.SerializerMethodField()
+    # no_of_house_units = serializers.SerializerMethodField()
+    class Meta:
+        model = HouseUnit
+        fields = ['id', 'house_id', 'unit_number', 'unit_type', 'description', 'rent_price', 'availability', 'name_of_owner']
+
+    def get_name_of_owner(self, object):
+        return str(object.house.owner.email) if object.house.owner else None
+    
+    def get_house_id(self, object):
+        return str(object.house.id) if object.house else None
+    
+    # def get_no_of_house_units(self, object):
+    #     return object.units[:]
+
+
+class HouseUnitUpdateSerializer(serializers.ModelSerializer):
     name_of_owner = serializers.SerializerMethodField()
     house_id = serializers.SerializerMethodField()
     # no_of_house_units = serializers.SerializerMethodField()
@@ -52,11 +98,6 @@ class HouseUnitSerializer(serializers.ModelSerializer):
     
     def get_house_id(self, object):
         return str(object.house.id) if object.house else None
-    
-    # def get_no_of_house_units(self, object):
-    #     return object.units[:]
-
-
 class OnboardUserSerializer(serializers.ModelSerializer):
     # house_address = serializers.SerializerMethodField()
     class Meta:

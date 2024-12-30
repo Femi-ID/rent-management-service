@@ -29,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY = config('SECRET_KEY')
 # SECRET_KEY = os.environ.get('SECRET_KEY')
 SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = "UONSoasinINEVISVFSNVML"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG')
@@ -61,12 +62,18 @@ INSTALLED_APPS = [
 
     # added dependencies
     'rest_framework',
+    "rest_framework.authtoken",
+    # "rest_framework.simplejwt",
+    # 'rest_framework_simplejwt.token_blacklist',
     'djoser',
     'corsheaders',
     'rest_framework_swagger',   # Swagger
     'drf_yasg',    # Another Swagger generator
+    'adrf',
     # 'debug_toolbar',
 ]
+
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -184,7 +191,9 @@ CORS_ALLOW_ALL_ORIGINS = True  # CHANGE THIS DURING PRODUCTION
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # "rest_framework.authentication.SessionAuthentication",
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # "api.authentication.TokenAuthentication",
     ),
 
     'DEFAULT_PERMISSION_CLASSES': (
@@ -273,3 +282,7 @@ REDIS_CLIENT_HOST = os.getenv('REDIS_CLIENT_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 #************ ****************** ****************** ***************** *************
+# REDIS_CLIENT_HOST='redis-12278.c85.us-east-1-2.ec2.redns.redis-cloud.com'
+REDIS_CLIENT_HOST='redis-15113.c80.us-east-1-2.ec2.redns.redis-cloud.com'
+REDIS_PORT=15113
+REDIS_PASSWORD='FX7HSpTlEmHo5Lcns6G1W3orUPWh4Lne'
