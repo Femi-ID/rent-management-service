@@ -9,6 +9,7 @@ defusedxml
 dj-database-url
 Django
 django-cors-headers
+django-cloudinary-storage
 django-debug-toolbar
 django-rest-swagger
 django-taggit
