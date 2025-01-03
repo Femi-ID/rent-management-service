@@ -18,7 +18,14 @@ def get_graph():
 
 
 def get_plot(x, y):
-    # ...
+    plt.switch_backend('AGG')
+    plt.figure(figure=(10,5))
+    plt.title('Yearly Income Review')
+    plt.plot(x, y)
+    plt.xticks(rotation=45)
+    plt.xlabel('months')
+    plt.ylabel('amount')
+    plt.tight_layout()
     graph = get_graph()
     return graph
 
