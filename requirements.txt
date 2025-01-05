@@ -9,7 +9,9 @@ defusedxml
 dj-database-url
 Django
 django-cors-headers
+django-cloudinary-storage
 django-debug-toolbar
+django-matplotlib
 django-rest-swagger
 django-taggit
 django-templated-mail
@@ -19,6 +21,7 @@ djoser
 drf-yasg
 gunicorn
 idna
+matplotlib
 oauthlib
 pillow
 psycopg2
